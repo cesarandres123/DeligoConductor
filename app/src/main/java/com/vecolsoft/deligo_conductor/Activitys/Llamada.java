@@ -77,6 +77,7 @@ public class Llamada extends AppCompatActivity {
             public void onClick(View v) {
                 if (!TextUtils.isEmpty(CustomerId)) {
                     cancelBooking(CustomerId);
+                    Common.OnSeguimiento = null;
                 }
 
             }
@@ -85,11 +86,13 @@ public class Llamada extends AppCompatActivity {
         btnAceptar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Llamada.this,Seguimiento.class);
+                Intent intent = new Intent(Llamada.this,HomeBox.class);
 
                 //pasar los datos del cliente
                 intent.putExtra("lat",lat);
                 intent.putExtra("lng",lng);
+
+                Common.OnSeguimiento = true;
 
                 startActivity(intent);
                 finish();

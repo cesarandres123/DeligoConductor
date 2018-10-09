@@ -57,7 +57,8 @@ public class Seguimiento extends AppCompatActivity implements
     private NavigationMapRoute navigationMapRoute;
     private static final String TAG = "MainActivity";
 
-    double riderlat, riderlng;
+    double riderlng = 1.0;
+    double riderlat = 1.0;
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;

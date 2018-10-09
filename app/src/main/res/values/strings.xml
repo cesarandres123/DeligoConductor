@@ -9,10 +9,16 @@
     <string name="registro_boton_login">REGISTRO</string>
     <string name="nombre_login">Nombre</string>
     <string name="phone_login">Telefono</string>
-    <string name="title_activity_home">home</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
-    <string name="tab_text_3">Tab 3</string>
+    <string name="title_activity_home">Map</string>
+
+    <string name="Google_Directions_key">AIzaSyB-CQThr1FjY4siOu-JPWsRSYulaYyIvVw</string>
+    <string name="MapQuest_key">dIjBpRBgR9z8CrB0s9EATS48Hthyd7kJ</string>
+
     <string name="action_settings">Settings</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="title_activity_perfil">PerfilActivity</string>
+    <string name="title_activity_seguimiento">Map</string>
+
+    <string name="access_token">pk.eyJ1IjoiY2VzYXJhbmRyZXMxMjMiLCJhIjoiY2ptcDVnNXE2MWJ2ZTNxanBqOTVmZ3JtbyJ9.uTIW5FJw3xbWqPUTWO0AJQ</string>
+
+
 </resources>

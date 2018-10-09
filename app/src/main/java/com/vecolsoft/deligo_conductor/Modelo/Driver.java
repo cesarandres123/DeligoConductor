@@ -1,13 +1,13 @@
 package com.vecolsoft.deligo_conductor.Modelo;
 
-public class User {
+public class Driver {
 
     private String email,password,name,phone;
 
-    public User() {
+    public Driver() {
     }
 
-    public User(String email, String password, String name, String phone) {
+    public Driver(String email, String password, String name, String phone) {
         this.email = email;
         this.password = password;
         this.name = name;

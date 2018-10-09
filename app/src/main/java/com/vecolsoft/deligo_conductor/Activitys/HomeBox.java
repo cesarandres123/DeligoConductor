@@ -38,6 +38,9 @@ import com.mapbox.android.core.location.LocationEnginePriority;
 import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
+import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -46,9 +49,12 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
@@ -60,6 +66,9 @@ import java.util.List;
 import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
@@ -75,6 +84,7 @@ public class HomeBox extends AppCompatActivity implements
     private LocationEngine locationEngine;
 
     private LocationManager locationManager;
+    private NavigationMapRoute navigationMapRoute;
 
     // variable for adding map
     private MapView mapView;
@@ -105,6 +115,14 @@ public class HomeBox extends AppCompatActivity implements
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
+
+    //sistema de seguimiento
+    double riderlng = 1.0;
+    double riderlat = 1.0;
+    private Point originPosition;
+    private Point destinationPosition;
+    private Marker destinationMarker;
+    private static final String TAG = "MainActivity";
 
 
     @Override
@@ -183,6 +201,10 @@ public class HomeBox extends AppCompatActivity implements
         //asignar valor
         location_switch.setChecked(estado_switch);
         ChangeColorBorderimage();
+
+        if (Common.OnSeguimiento != null) {
+            location_switch.setClickable(false);
+        }
 
         location_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -271,7 +293,132 @@ public class HomeBox extends AppCompatActivity implements
 
         }
 
+        //SIstema de seguimieno
+        if (getIntent() != null) {
 
+            riderlat = getIntent().getDoubleExtra("lat", -1.0);
+            riderlng = getIntent().getDoubleExtra("lng", -1.0);
+        }
+
+        if (Common.OnSeguimiento != null) {
+
+            destinationPosition = Point.fromLngLat(riderlng,riderlat);
+            originPosition      = Point.fromLngLat(Common.MyLocation.getLongitude(),Common.MyLocation.getLatitude());
+
+            getRoute(originPosition,destinationPosition);
+        }
+
+
+    }
+
+    private void getRoute(Point origin, Point destination){
+        NavigationRoute.builder()
+                .accessToken(Mapbox.getAccessToken())
+                .origin(origin)
+                .destination(destination)
+                .build()
+                .getRoute(new Callback<DirectionsResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+                        if (response.body() == null) {
+                            Log.e(TAG,"No routes found check access token");
+                            return;
+                        } else if (response.body().routes().size() ==  0) {
+                            Log.e(TAG,"No routes fund");
+                            return;
+                        }
+
+                        DirectionsRoute currentRoute = response.body().routes().get(0);
+
+                        if (navigationMapRoute != null) {
+                            navigationMapRoute.removeRoute();
+                        } else {
+                            navigationMapRoute = new NavigationMapRoute(null,mapView,mapboxMap);
+                        }
+                        navigationMapRoute.addRoute(currentRoute);
+                        setRouteCameraPosition();
+                    }
+
+                    @Override
+                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
+                        Log.e(TAG,"error: " + t.getMessage());
+                    }
+                });
+    }
+
+    private void setRouteCameraPositionn() {
+
+        //añadir marcador conductor
+        if (mCurrent != null) {
+            mCurrent.remove();
+        }
+        // Create an Icon object for the marker to use
+        IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
+        Icon icon = iconFactory.fromResource(R.drawable.circlemo);
+
+        mCurrent = mapboxMap.addMarker(new MarkerOptions()
+                .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
+                .icon(icon));
+
+        ////////////////////////////
+
+        //añadir marcador destino
+        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
+                .position(new LatLng(riderlat,riderlng)));
+        ////////////////////////////
+
+        LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                .include(new LatLng(originPosition.latitude(),originPosition.longitude()))
+                .include(new LatLng(destinationPosition.latitude(),destinationPosition.longitude()))
+                .build();
+
+        mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
+    }
+
+    private void setRouteCameraPosition() {
+
+        if (Common.MyLocation != null) {
+            if (location_switch.isChecked()) {
+
+                final double latitude = Common.MyLocation.getLatitude();
+                final double longitude = Common.MyLocation.getLongitude();
+
+                //update to firebase
+                geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
+                    @Override
+                    public void onComplete(String key, DatabaseError error) {
+
+                        //añadir marcador conductor
+                        if (mCurrent != null) {
+                            mCurrent.remove();
+                        }
+
+                        // Create an Icon object for the marker to use
+                        IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
+                        Icon icon = iconFactory.fromResource(R.drawable.circlemo);
+
+                        mCurrent = mapboxMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
+                                .icon(icon));
+
+
+                        //añadir marcador destino
+                        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(riderlat,riderlng)));
+                        ////////////////////////////
+
+                        LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                                .include(new LatLng(originPosition.latitude(),originPosition.longitude()))
+                                .include(new LatLng(destinationPosition.latitude(),destinationPosition.longitude()))
+                                .build();
+
+                        mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
+                    }
+                });
+            }
+        } else {
+            Log.d("ERROR", "No se puede obtener la localisacion.");
+        }
     }
 
     private void updateFirebaseToken() {
@@ -448,6 +595,7 @@ public class HomeBox extends AppCompatActivity implements
         if (locationEngine != null) {
             locationEngine.deactivate();
         }
+        Common.OnSeguimiento = null;
         mapView.onDestroy();
     }
 
@@ -468,7 +616,13 @@ public class HomeBox extends AppCompatActivity implements
     public void onLocationChanged(Location location) {
         if (location != null) {
             Common.MyLocation = location;
-            displayLocation();
+
+            if (Common.OnSeguimiento != null) {
+                getRoute(originPosition,destinationPosition);
+                setRouteCameraPosition();
+            }else {
+                displayLocation();
+            }
         }
     }
 

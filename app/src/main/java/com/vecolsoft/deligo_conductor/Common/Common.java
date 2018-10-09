@@ -17,6 +17,7 @@ public class Common {
     public static final String token_tbl = "Tokens";
 
     public static Location MyLocation =  null;
+    public static Boolean OnSeguimiento = null;
 
     public static final String baseURL = "https://maps.googleapis.com";
     public static final String fcmURL = "https://fcm.googleapis.com/";
