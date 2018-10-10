@@ -1,16 +1,19 @@
 package com.vecolsoft.deligo_conductor.Activitys;
 
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
@@ -21,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
@@ -58,10 +62,17 @@ import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
+import com.vecolsoft.deligo_conductor.Remote.IGoogleAPI;
 import com.vecolsoft.deligo_conductor.Servicio.MyServicio;
 import com.vecolsoft.deligo_conductor.Utils.InternetConnection;
 import com.vecolsoft.deligo_conductor.Utils.Utils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Text;
+
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Objects;
 
@@ -92,14 +103,20 @@ public class HomeBox extends AppCompatActivity implements
 
     private SharedPreferences prefs;
 
+
     //elementos del toolbar
     private Toolbar toolbar;
     private CircleImageView circleImageView;
     private RelativeLayout perfil;
     /////////////////////////////////
 
+    //elementos
+    private TextView txtLocation;
+
     DatabaseReference drivers;
     GeoFire geoFire;
+
+    IGoogleAPI mService;
 
 
     SwitchCompat location_switch;
@@ -123,6 +140,7 @@ public class HomeBox extends AppCompatActivity implements
     private Point destinationPosition;
     private Marker destinationMarker;
     private static final String TAG = "MainActivity";
+    private DirectionsRoute currentRoute;
 
 
     @Override
@@ -164,6 +182,8 @@ public class HomeBox extends AppCompatActivity implements
 
         prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
 
+        mService = Common.getGoogleAPI();
+
         mapView = (MapView) findViewById(R.id.mapViewBox);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
@@ -195,6 +215,9 @@ public class HomeBox extends AppCompatActivity implements
 
         //Location switch
         location_switch = (SwitchCompat) findViewById(R.id.switch_Location);
+
+        //location TextView
+        txtLocation = (TextView) findViewById(R.id.txtLocation);
 
         //obtiene valor.
         boolean estado_switch = Utils.getValuePreference(prefs);
@@ -302,17 +325,63 @@ public class HomeBox extends AppCompatActivity implements
 
         if (Common.OnSeguimiento != null) {
 
-            destinationPosition = Point.fromLngLat(riderlng,riderlat);
-            originPosition      = Point.fromLngLat(Common.MyLocation.getLongitude(),Common.MyLocation.getLatitude());
+            destinationPosition = Point.fromLngLat(riderlng, riderlat);
+            originPosition = Point.fromLngLat(Common.MyLocation.getLongitude(), Common.MyLocation.getLatitude());
 
-            getRoute(originPosition,destinationPosition);
+            getRoute(originPosition, destinationPosition);
         }
 
 
     }
 
-    private void getRoute(Point origin, Point destination){
-        NavigationRoute.builder()
+    private void getLocation() {
+
+        String requestApi = null;
+        try {
+
+            requestApi = "https://api.mapbox.com/geocoding/v5/mapbox.places/" +
+                    Common.MyLocation.getLongitude() + "," + Common.MyLocation.getLatitude() +
+                    ".json?" +
+                    "access_token=" + getResources().getString(R.string.access_token);
+
+            Log.d("vencolsoft", requestApi); //print url for debug
+
+            mService.getPath(requestApi)
+                    .enqueue(new Callback<String>() {
+                        @Override
+                        public void onResponse(Call<String> call, Response<String> response) {
+
+                            try {
+                                JSONObject jsonObject = new JSONObject(response.body().toString());
+
+                                JSONArray features = jsonObject.getJSONArray("features");
+
+                                JSONObject object = features.getJSONObject(0);
+
+                                JSONObject properties = object.getJSONObject("properties");
+
+
+//                                Get Address
+                                String address = properties.getString("address");
+                                txtLocation.setText(address);
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<String> call, Throwable t) {
+                            Toast.makeText(c, "" + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getRoute(Point origin, Point destination) {
+        NavigationRoute.builder(this)
                 .accessToken(Mapbox.getAccessToken())
                 .origin(origin)
                 .destination(destination)
@@ -320,59 +389,33 @@ public class HomeBox extends AppCompatActivity implements
                 .getRoute(new Callback<DirectionsResponse>() {
                     @Override
                     public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+                        // You can get the generic HTTP info about the response
+                        Log.d(TAG, "Response code: " + response.code());
                         if (response.body() == null) {
-                            Log.e(TAG,"No routes found check access token");
+                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
                             return;
-                        } else if (response.body().routes().size() ==  0) {
-                            Log.e(TAG,"No routes fund");
+                        } else if (response.body().routes().size() < 1) {
+                            Log.e(TAG, "No routes found");
                             return;
                         }
 
-                        DirectionsRoute currentRoute = response.body().routes().get(0);
+                        currentRoute = response.body().routes().get(0);
 
+                        // Draw the route on the map
                         if (navigationMapRoute != null) {
                             navigationMapRoute.removeRoute();
                         } else {
-                            navigationMapRoute = new NavigationMapRoute(null,mapView,mapboxMap);
+                            navigationMapRoute = new NavigationMapRoute(null, mapView, mapboxMap, R.style.NavigationMapRoute);
                         }
                         navigationMapRoute.addRoute(currentRoute);
                         setRouteCameraPosition();
                     }
 
                     @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
-                        Log.e(TAG,"error: " + t.getMessage());
+                    public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
+                        Log.e(TAG, "Error: " + throwable.getMessage());
                     }
                 });
-    }
-
-    private void setRouteCameraPositionn() {
-
-        //añadir marcador conductor
-        if (mCurrent != null) {
-            mCurrent.remove();
-        }
-        // Create an Icon object for the marker to use
-        IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
-        Icon icon = iconFactory.fromResource(R.drawable.circlemo);
-
-        mCurrent = mapboxMap.addMarker(new MarkerOptions()
-                .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
-                .icon(icon));
-
-        ////////////////////////////
-
-        //añadir marcador destino
-        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
-                .position(new LatLng(riderlat,riderlng)));
-        ////////////////////////////
-
-        LatLngBounds latLngBounds = new LatLngBounds.Builder()
-                .include(new LatLng(originPosition.latitude(),originPosition.longitude()))
-                .include(new LatLng(destinationPosition.latitude(),destinationPosition.longitude()))
-                .build();
-
-        mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
     }
 
     private void setRouteCameraPosition() {
@@ -404,12 +447,12 @@ public class HomeBox extends AppCompatActivity implements
 
                         //añadir marcador destino
                         destinationMarker = mapboxMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(riderlat,riderlng)));
+                                .position(new LatLng(riderlat, riderlng)));
                         ////////////////////////////
 
                         LatLngBounds latLngBounds = new LatLngBounds.Builder()
-                                .include(new LatLng(originPosition.latitude(),originPosition.longitude()))
-                                .include(new LatLng(destinationPosition.latitude(),destinationPosition.longitude()))
+                                .include(new LatLng(originPosition.latitude(), originPosition.longitude()))
+                                .include(new LatLng(destinationPosition.latitude(), destinationPosition.longitude()))
                                 .build();
 
                         mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
@@ -618,12 +661,15 @@ public class HomeBox extends AppCompatActivity implements
             Common.MyLocation = location;
 
             if (Common.OnSeguimiento != null) {
-                getRoute(originPosition,destinationPosition);
+                getRoute(originPosition, destinationPosition);
                 setRouteCameraPosition();
-            }else {
+                txtLocation.setVisibility(View.GONE);
+            } else {
                 displayLocation();
+                getLocation();
             }
         }
+
     }
 
     @Override
@@ -725,6 +771,7 @@ public class HomeBox extends AppCompatActivity implements
 
         dialogo.show();
     }
+
     @Override
     public void onBackPressed() {
         if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()) {
@@ -739,4 +786,17 @@ public class HomeBox extends AppCompatActivity implements
         tiempoPrimerClick = System.currentTimeMillis();
     }
 
+    public void LoadLocation(View view) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationEngine.requestLocationUpdates();
+    }
 }

@@ -102,7 +102,7 @@ public class Seguimiento extends AppCompatActivity implements
     }
 
     private void getRoute(Point origin, Point destination){
-        NavigationRoute.builder()
+        NavigationRoute.builder(this)
                 .accessToken(Mapbox.getAccessToken())
                 .origin(origin)
                 .destination(destination)
