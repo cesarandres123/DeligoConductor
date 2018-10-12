@@ -29,9 +29,6 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".Activitys.Home"
-            android:label="@string/title_activity_home" />
-        <activity
             android:name=".Activitys.PerfilActivity"
             android:label="@string/title_activity_perfil"
             android:theme="@style/AppTheme" />
