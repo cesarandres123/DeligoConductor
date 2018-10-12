@@ -12,15 +12,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
+import com.vecolsoft.deligo_conductor.Remote.GetGson;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
-import com.vecolsoft.deligo_conductor.Remote.IGoogleAPI;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,8 +41,10 @@ public class Llamada extends AppCompatActivity {
 
     MediaPlayer mediaPlayer;
 
-    IGoogleAPI mService;
     IFCMService mFCMService;
+
+    //////////Elementos de JsonParsing
+    GetGson mGetGson;
 
     Context c = this;
 
@@ -59,8 +60,9 @@ public class Llamada extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_llamada);
 
-        mService = Common.getGoogleAPI();
         mFCMService = Common.getFCMService();
+        mGetGson = Common.getGson();
+
 
         //intviews
 
@@ -150,7 +152,7 @@ public class Llamada extends AppCompatActivity {
 
             Log.d("vencolsoft", requestApi); //print url for debug
 
-            mService.getPath(requestApi)
+            mGetGson.getPath(requestApi)
                     .enqueue(new Callback<String>() {
                         @Override
                         public void onResponse(Call<String> call, Response<String> response) {

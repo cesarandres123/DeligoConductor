@@ -62,7 +62,7 @@ import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
-import com.vecolsoft.deligo_conductor.Remote.IGoogleAPI;
+import com.vecolsoft.deligo_conductor.Remote.GetGson;
 import com.vecolsoft.deligo_conductor.Servicio.MyServicio;
 import com.vecolsoft.deligo_conductor.Utils.InternetConnection;
 import com.vecolsoft.deligo_conductor.Utils.Utils;
@@ -70,9 +70,7 @@ import com.vecolsoft.deligo_conductor.Utils.Utils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,14 +108,15 @@ public class HomeBox extends AppCompatActivity implements
     private RelativeLayout perfil;
     /////////////////////////////////
 
+    //////////Elementos de JsonParsing
+    GetGson mGetGson;
+
+
     //elementos
     private TextView txtLocation;
 
     DatabaseReference drivers;
     GeoFire geoFire;
-
-    IGoogleAPI mService;
-
 
     SwitchCompat location_switch;
 
@@ -180,9 +179,12 @@ public class HomeBox extends AppCompatActivity implements
 
         setContentView(R.layout.activity_home_box);
 
+
+        mGetGson = Common.getGson();
         prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
 
-        mService = Common.getGoogleAPI();
+
+
 
         mapView = (MapView) findViewById(R.id.mapViewBox);
         mapView.onCreate(savedInstanceState);
@@ -346,7 +348,7 @@ public class HomeBox extends AppCompatActivity implements
 
             Log.d("vencolsoft", requestApi); //print url for debug
 
-            mService.getPath(requestApi)
+            mGetGson.getPath(requestApi)
                     .enqueue(new Callback<String>() {
                         @Override
                         public void onResponse(Call<String> call, Response<String> response) {
@@ -784,19 +786,5 @@ public class HomeBox extends AppCompatActivity implements
             Toast.makeText(this, "Vuelve a presionar para salir", Toast.LENGTH_SHORT).show();
         }
         tiempoPrimerClick = System.currentTimeMillis();
-    }
-
-    public void LoadLocation(View view) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        locationEngine.requestLocationUpdates();
     }
 }
