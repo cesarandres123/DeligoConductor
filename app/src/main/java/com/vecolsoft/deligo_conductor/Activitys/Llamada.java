@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vecolsoft.deligo_conductor.Common.Common;
+import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
@@ -26,6 +27,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
@@ -48,7 +51,7 @@ public class Llamada extends AppCompatActivity {
 
     Context c = this;
 
-    String CustomerId;
+    String customerId;
 
     double lat,lng;
 
@@ -77,8 +80,8 @@ public class Llamada extends AppCompatActivity {
         btnCancelar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!TextUtils.isEmpty(CustomerId)) {
-                    cancelBooking(CustomerId);
+                if (!TextUtils.isEmpty(customerId)) {
+                    cancelBooking(customerId);
                     Common.OnSeguimiento = null;
                 }
 
@@ -93,6 +96,7 @@ public class Llamada extends AppCompatActivity {
                 //pasar los datos del cliente
                 intent.putExtra("lat",lat);
                 intent.putExtra("lng",lng);
+                intent.putExtra("customerId",customerId);
 
                 Common.OnSeguimiento = true;
 
@@ -109,16 +113,16 @@ public class Llamada extends AppCompatActivity {
 
              lat = getIntent().getDoubleExtra("lat", -1.0);
              lng = getIntent().getDoubleExtra("lng", -1.0);
-            CustomerId = getIntent().getStringExtra("customer");
+            customerId = getIntent().getStringExtra("customer");
 
             getDirection(lat, lng);
         }
     }
 
     private void cancelBooking(String customerId) {
-        Token token = new Token(CustomerId);
+        Token token = new Token(customerId);
 
-        Notification notification = new Notification("","El conductor ha cancelado tu solicitud.");
+        Notification notification = new Notification("Cancel","El conductor ha cancelado tu solicitud.");
         Sender sender = new Sender(token.getToken(),notification);
 
         mFCMService.sendMessage(sender)

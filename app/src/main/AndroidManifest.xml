@@ -57,7 +57,6 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".Activitys.Seguimiento" />
         <activity android:name=".Activitys.HomeBox"></activity>
     </application>
 

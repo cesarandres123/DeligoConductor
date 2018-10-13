@@ -2,6 +2,7 @@ package com.vecolsoft.deligo_conductor.Common;
 
 import android.location.Location;
 
+import com.vecolsoft.deligo_conductor.Modelo.Driver;
 import com.vecolsoft.deligo_conductor.Remote.FCMClient;
 import com.vecolsoft.deligo_conductor.Remote.GetGson;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
@@ -17,7 +18,10 @@ public class Common {
     public static final String token_tbl = "Tokens";
 
     public static Location MyLocation =  null;
+
     public static Boolean OnSeguimiento = null;
+
+    public static Driver currentUser;
 
 
     private static final String BASE_URL = "https://api.mapbox.com";

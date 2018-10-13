@@ -29,8 +29,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.leo.simplearcloader.ArcConfiguration;
 import com.leo.simplearcloader.SimpleArcDialog;
 import com.vecolsoft.deligo_conductor.Common.Common;
@@ -174,6 +177,21 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(AuthResult authResult) {
                         CargaDialog.dismiss();
+
+                        FirebaseDatabase.getInstance().getReference(Common.user_driver_tbl)
+                                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        Common.currentUser = dataSnapshot.getValue(Driver.class);
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                });
+
                         startActivity(new Intent(MainActivity.this, HomeBox.class));
                         saveOnPreferences(edtEmail.getText().toString(),edtPassword.getText().toString());
                         finish();

@@ -29,6 +29,8 @@ import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -60,9 +62,14 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
+import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
+import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
+import com.vecolsoft.deligo_conductor.Modelo.Notification;
+import com.vecolsoft.deligo_conductor.Modelo.Sender;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
 import com.vecolsoft.deligo_conductor.Remote.GetGson;
+import com.vecolsoft.deligo_conductor.Remote.IFCMService;
 import com.vecolsoft.deligo_conductor.Servicio.MyServicio;
 import com.vecolsoft.deligo_conductor.Utils.InternetConnection;
 import com.vecolsoft.deligo_conductor.Utils.Utils;
@@ -71,7 +78,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -110,10 +119,12 @@ public class HomeBox extends AppCompatActivity implements
 
     //////////Elementos de JsonParsing
     GetGson mGetGson;
+    IFCMService mfcmService;
 
 
     //elementos
     private TextView txtLocation;
+
 
     DatabaseReference drivers;
     GeoFire geoFire;
@@ -140,6 +151,7 @@ public class HomeBox extends AppCompatActivity implements
     private Marker destinationMarker;
     private static final String TAG = "MainActivity";
     private DirectionsRoute currentRoute;
+    String customerId;
 
 
     @Override
@@ -181,9 +193,9 @@ public class HomeBox extends AppCompatActivity implements
 
 
         mGetGson = Common.getGson();
+        mfcmService = Common.getFCMService();
+
         prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
-
-
 
 
         mapView = (MapView) findViewById(R.id.mapViewBox);
@@ -243,6 +255,7 @@ public class HomeBox extends AppCompatActivity implements
                     FirebaseDatabase.getInstance().goOnline(); // conectado
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorON));
                     displayLocation();
+                    getLocation(); //mostar ubicacion en textview
                     Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO ACTIVO", Snackbar.LENGTH_SHORT).show();
                     startService(new Intent(c, MyServicio.class));
 
@@ -252,6 +265,7 @@ public class HomeBox extends AppCompatActivity implements
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorOFF));
                     stopLocationEngine();
                     mCurrent.remove();
+                    txtLocation.setText("Sin ubucacion.");
                     Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO INACTIVO", Snackbar.LENGTH_SHORT).show();
                     stopService(new Intent(c, MyServicio.class));
 
@@ -323,6 +337,7 @@ public class HomeBox extends AppCompatActivity implements
 
             riderlat = getIntent().getDoubleExtra("lat", -1.0);
             riderlng = getIntent().getDoubleExtra("lng", -1.0);
+            customerId = getIntent().getStringExtra("customerId");
         }
 
         if (Common.OnSeguimiento != null) {
@@ -450,7 +465,6 @@ public class HomeBox extends AppCompatActivity implements
                         //añadir marcador destino
                         destinationMarker = mapboxMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(riderlat, riderlng)));
-                        ////////////////////////////
 
                         LatLngBounds latLngBounds = new LatLngBounds.Builder()
                                 .include(new LatLng(originPosition.latitude(), originPosition.longitude()))
@@ -458,12 +472,40 @@ public class HomeBox extends AppCompatActivity implements
                                 .build();
 
                         mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
+
+
                     }
                 });
             }
         } else {
             Log.d("ERROR", "No se puede obtener la localisacion.");
         }
+    }
+
+    private void EnviarNotificacionDeArribo(String customerId) {
+        Token token = new Token(customerId);
+
+        //TODO
+        //poner a funcionar el mensaje con el nombre del conductor
+        //existe un problema con .getname()
+        //imposible invocar Common.currentuser.getname()
+
+        Notification notification = new Notification("Esta aqui!","El conductor ha llegado.");
+        Sender sender = new Sender(token.getToken(), notification);
+
+        mfcmService.sendMessage(sender).enqueue(new Callback<FCMResponse>() {
+            @Override
+            public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
+                if (response.body().success != 1) {
+                    Toast.makeText(HomeBox.this, "Error.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FCMResponse> call, Throwable t) {
+
+            }
+        });
     }
 
     private void updateFirebaseToken() {
@@ -486,6 +528,40 @@ public class HomeBox extends AppCompatActivity implements
         mapboxMap.getUiSettings().setLogoEnabled(false);
         mapboxMap.getUiSettings().setTiltGesturesEnabled(false);
         mapboxMap.getUiSettings().setRotateGesturesEnabled(false);
+
+        if (Common.OnSeguimiento != null) {
+
+            //Sistema de notificar arribo de conductor
+            geoFire = new GeoFire(FirebaseDatabase.getInstance().getReference(Common.driver_tbl));
+            GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(riderlat, riderlng), 0.05f);
+            geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+                @Override
+                public void onKeyEntered(String key, GeoLocation location) {
+                    EnviarNotificacionDeArribo(customerId);
+                }
+
+                @Override
+                public void onKeyExited(String key) {
+
+                }
+
+                @Override
+                public void onKeyMoved(String key, GeoLocation location) {
+
+                }
+
+                @Override
+                public void onGeoQueryReady() {
+
+                }
+
+                @Override
+                public void onGeoQueryError(DatabaseError error) {
+
+                }
+            });
+
+        }
     }
 
     private void displayLocation() {
@@ -505,7 +581,6 @@ public class HomeBox extends AppCompatActivity implements
                         if (mCurrent != null) {
                             mCurrent.remove();
                         }
-
                         // Create an Icon object for the marker to use
                         IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
                         Icon icon = iconFactory.fromResource(R.drawable.circlemo);
@@ -521,6 +596,8 @@ public class HomeBox extends AppCompatActivity implements
                                 .build(); // Builds the CameraPosition object from the builder
 
                         mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
+
+
                     }
                 });
             }
@@ -537,11 +614,13 @@ public class HomeBox extends AppCompatActivity implements
 
             //autoIniciar el servicio
             if (location_switch.isChecked()) {
+
                 if (MyServicio.isServiceCreated()) {
-                    Log.e("logogo", "servicio ejecutandoce");
+                    Log.e("logogo", "servicio no ejecutandoce");
 
                 } else {
                     startService(new Intent(c, MyServicio.class));
+
                 }
             }
 
@@ -555,7 +634,9 @@ public class HomeBox extends AppCompatActivity implements
 
         if (locationEngine != null) {
             locationEngine.deactivate();
-            mCurrent.remove();
+            if (mCurrent != null) {
+                mCurrent.remove();
+            }
         }
     }
 
@@ -668,7 +749,10 @@ public class HomeBox extends AppCompatActivity implements
                 txtLocation.setVisibility(View.GONE);
             } else {
                 displayLocation();
-                getLocation();
+                if (location_switch.isChecked()) {
+                    getLocation();
+                }
+
             }
         }
 

@@ -1,5 +1,6 @@
 package com.vecolsoft.deligo_conductor.Remote;
 
+import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
 
