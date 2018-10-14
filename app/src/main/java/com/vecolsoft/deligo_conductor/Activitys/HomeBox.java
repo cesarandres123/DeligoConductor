@@ -100,9 +100,12 @@ public class HomeBox extends AppCompatActivity implements
     private MapboxMap mapboxMap;
     private PermissionsManager permissionsManager;
     private LocationEngine locationEngine;
-
     private LocationManager locationManager;
     private NavigationMapRoute navigationMapRoute;
+
+    private static int UPDATE_INTERVAL = 5000;
+    private static int FASTEST_INTERVAL = 3000;
+    private static int DISPLACEMENT = 10;
 
     // variable for adding map
     private MapView mapView;
@@ -490,7 +493,7 @@ public class HomeBox extends AppCompatActivity implements
         //existe un problema con .getname()
         //imposible invocar Common.currentuser.getname()
 
-        Notification notification = new Notification("Esta aqui!","El conductor ha llegado.");
+        Notification notification = new Notification("Esta aqui!", "El conductor ha llegado.");
         Sender sender = new Sender(token.getToken(), notification);
 
         mfcmService.sendMessage(sender).enqueue(new Callback<FCMResponse>() {
@@ -645,6 +648,13 @@ public class HomeBox extends AppCompatActivity implements
         LocationEngineProvider locationEngineProvider = new LocationEngineProvider(this);
         locationEngine = locationEngineProvider.obtainBestLocationEngineAvailable();
         locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
+
+        /////////////////////////////////////////
+        locationEngine.setInterval(UPDATE_INTERVAL);
+        locationEngine.setFastestInterval(FASTEST_INTERVAL);
+        locationEngine.setSmallestDisplacement(DISPLACEMENT);
+        /////////////////////////////////////////
+
         locationEngine.activate();
 
         Location lastLocation = locationEngine.getLastLocation();
@@ -748,8 +758,9 @@ public class HomeBox extends AppCompatActivity implements
                 setRouteCameraPosition();
                 txtLocation.setVisibility(View.GONE);
             } else {
-                displayLocation();
+
                 if (location_switch.isChecked()) {
+                    displayLocation();
                     getLocation();
                 }
 
