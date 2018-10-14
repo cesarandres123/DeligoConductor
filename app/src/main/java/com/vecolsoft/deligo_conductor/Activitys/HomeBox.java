@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -78,8 +81,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -102,6 +107,8 @@ public class HomeBox extends AppCompatActivity implements
     private LocationEngine locationEngine;
     private LocationManager locationManager;
     private NavigationMapRoute navigationMapRoute;
+    //geocider location
+    Geocoder geocoder;
 
     private static int UPDATE_INTERVAL = 5000;
     private static int FASTEST_INTERVAL = 3000;
@@ -120,13 +127,12 @@ public class HomeBox extends AppCompatActivity implements
     private RelativeLayout perfil;
     /////////////////////////////////
 
-    //////////Elementos de JsonParsing
-    GetGson mGetGson;
     IFCMService mfcmService;
 
 
     //elementos
     private TextView txtLocation;
+
 
 
     DatabaseReference drivers;
@@ -195,7 +201,6 @@ public class HomeBox extends AppCompatActivity implements
         setContentView(R.layout.activity_home_box);
 
 
-        mGetGson = Common.getGson();
         mfcmService = Common.getFCMService();
 
         prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
@@ -258,7 +263,12 @@ public class HomeBox extends AppCompatActivity implements
                     FirebaseDatabase.getInstance().goOnline(); // conectado
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorON));
                     displayLocation();
-                    getLocation(); //mostar ubicacion en textview
+
+                    try {
+                        getLocation(); //mostar ubicacion en textview
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO ACTIVO", Snackbar.LENGTH_SHORT).show();
                     startService(new Intent(c, MyServicio.class));
 
@@ -354,50 +364,19 @@ public class HomeBox extends AppCompatActivity implements
 
     }
 
-    private void getLocation() {
+    private void getLocation() throws IOException {
 
-        String requestApi = null;
-        try {
+        final double latitude = Common.MyLocation.getLatitude();
+        final double longitude = Common.MyLocation.getLongitude();
 
-            requestApi = "https://api.mapbox.com/geocoding/v5/mapbox.places/" +
-                    Common.MyLocation.getLongitude() + "," + Common.MyLocation.getLatitude() +
-                    ".json?" +
-                    "access_token=" + getResources().getString(R.string.access_token);
+        List<Address> addresses;
+        geocoder = new Geocoder(this, Locale.getDefault());
 
-            Log.d("vencolsoft", requestApi); //print url for debug
+        addresses = geocoder.getFromLocation(latitude, longitude, 1);
 
-            mGetGson.getPath(requestApi)
-                    .enqueue(new Callback<String>() {
-                        @Override
-                        public void onResponse(Call<String> call, Response<String> response) {
+        String txtLocationn = addresses.get(0).getAddressLine(0);
 
-                            try {
-                                JSONObject jsonObject = new JSONObject(response.body().toString());
-
-                                JSONArray features = jsonObject.getJSONArray("features");
-
-                                JSONObject object = features.getJSONObject(0);
-
-                                JSONObject properties = object.getJSONObject("properties");
-
-
-//                                Get Address
-                                String address = properties.getString("address");
-                                txtLocation.setText(address);
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<String> call, Throwable t) {
-                            Toast.makeText(c, "" + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        txtLocation.setText(txtLocationn);
     }
 
     private void getRoute(Point origin, Point destination) {
@@ -455,7 +434,6 @@ public class HomeBox extends AppCompatActivity implements
                         if (mCurrent != null) {
                             mCurrent.remove();
                         }
-
                         // Create an Icon object for the marker to use
                         IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
                         Icon icon = iconFactory.fromResource(R.drawable.circlemo);
@@ -761,7 +739,11 @@ public class HomeBox extends AppCompatActivity implements
 
                 if (location_switch.isChecked()) {
                     displayLocation();
-                    getLocation();
+                    try {
+                        getLocation();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
 
             }

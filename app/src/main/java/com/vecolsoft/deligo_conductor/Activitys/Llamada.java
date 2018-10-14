@@ -2,6 +2,9 @@ package com.vecolsoft.deligo_conductor.Activitys;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.media.MediaPlayer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,8 +29,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -57,6 +63,9 @@ public class Llamada extends AppCompatActivity {
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
+
+    //geocider location
+    Geocoder geocoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +124,11 @@ public class Llamada extends AppCompatActivity {
              lng = getIntent().getDoubleExtra("lng", -1.0);
             customerId = getIntent().getStringExtra("customer");
 
-            getDirection(lat, lng);
+            try {
+                getDirection(lat, lng);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -142,7 +155,7 @@ public class Llamada extends AppCompatActivity {
                 });
     }
 
-    private void getDirection(double lat, double lng) {
+    private void getDirection2(double lat, double lng) {
 
         String requestApi = null;
         try {
@@ -201,6 +214,34 @@ public class Llamada extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void getDirection(double lat, double lng) throws IOException {
+        ///Obtener La localisacion
+        List<Address> addresses;
+        geocoder = new Geocoder(this, Locale.getDefault());
+
+        addresses = geocoder.getFromLocation(lat, lng, 1);
+
+        String address = addresses.get(0).getAddressLine(0);
+
+        txtAddress.setText(address);
+
+        //obtener la distancia
+        Location loc1 = new Location("");
+        loc1.setLatitude(lat);
+        loc1.setLongitude(lng);
+
+        Location loc2 = new Location("");
+        loc2.setLatitude(Common.MyLocation.getLatitude());
+        loc2.setLongitude(Common.MyLocation.getLongitude());
+
+        float distanceInMeters = loc1.distanceTo(loc2);
+        DecimalFormat df = new DecimalFormat("#.0");
+        txtDistance.setText(df.format(distanceInMeters) + " Metros");
+
+
+
     }
 
     @Override
