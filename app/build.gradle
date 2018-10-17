@@ -59,9 +59,7 @@ dependencies {
     //mapbox
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:6.5.0'
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.8.2'
-    implementation 'com.mapbox.mapboxsdk:mapbox-android-navigation:0.20.0'
-    implementation ('com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.20.0') {
-        transitive = true
-    }
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-navigation:0.21.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.21.0'
 }
 apply plugin: 'com.google.gms.google-services'

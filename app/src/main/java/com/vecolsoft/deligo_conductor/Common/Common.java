@@ -21,6 +21,8 @@ public class Common {
 
     public static Boolean OnSeguimiento = null;
 
+    public static Boolean UnaSolaVes = null;
+
     public static Driver currentUser;
 
 

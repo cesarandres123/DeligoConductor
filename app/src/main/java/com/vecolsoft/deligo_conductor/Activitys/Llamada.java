@@ -43,19 +43,13 @@ import retrofit2.Response;
 
 public class Llamada extends AppCompatActivity {
 
-    TextView txtTime, txtDistance, txtAddress;
+    TextView txtDistance, txtAddress;
     AppCompatButton btnAceptar,btnCancelar;
 
-    CircleImageView circleImageView;
 
     MediaPlayer mediaPlayer;
 
     IFCMService mFCMService;
-
-    //////////Elementos de JsonParsing
-    GetGson mGetGson;
-
-    Context c = this;
 
     String customerId;
 
@@ -73,15 +67,11 @@ public class Llamada extends AppCompatActivity {
         setContentView(R.layout.activity_llamada);
 
         mFCMService = Common.getFCMService();
-        mGetGson = Common.getGson();
 
 
         //intviews
-
-        txtTime = (TextView) findViewById(R.id.txtTime);
         txtDistance = (TextView) findViewById(R.id.txtDistance);
         txtAddress = (TextView) findViewById(R.id.txtAddress);
-        circleImageView = (CircleImageView) findViewById(R.id.map_image);
 
         btnAceptar = (AppCompatButton) findViewById(R.id.btnAccept);
         btnCancelar = (AppCompatButton) findViewById(R.id.btnDecline);
@@ -154,68 +144,6 @@ public class Llamada extends AppCompatActivity {
                     }
                 });
     }
-
-    private void getDirection2(double lat, double lng) {
-
-        String requestApi = null;
-        try {
-
-            requestApi = "https://api.mapbox.com/directions/v5/mapbox/cycling/" +
-                    Common.MyLocation.getLongitude() + "," + Common.MyLocation.getLatitude() + ";" +
-                    lng + "," + lat +
-                    "?steps=" + "true" +
-                    "&alternatives=" + "true" +
-                    "&access_token=" + getResources().getString(R.string.access_token);
-
-            Log.d("vencolsoft", requestApi); //print url for debug
-
-            mGetGson.getPath(requestApi)
-                    .enqueue(new Callback<String>() {
-                        @Override
-                        public void onResponse(Call<String> call, Response<String> response) {
-
-                            try {
-                                JSONObject jsonObject = new JSONObject(response.body().toString());
-
-                                JSONArray routes = jsonObject.getJSONArray("routes");
-
-                                JSONObject object = routes.getJSONObject(0);
-
-                                JSONArray legs = object.getJSONArray("legs");
-                                JSONObject legsObject = legs.getJSONObject(0);
-
-//                                Get Distancec
-                                double distance = legsObject.getDouble("distance");
-                                DecimalFormat df = new DecimalFormat("#.0");
-                                txtDistance.setText(df.format(distance) + " Km");
-
-//                                Get Time
-                                int time = legsObject.getInt("duration");
-                                int hor,min,seg;
-                                hor=time/3600;
-                                min=(time-(3600*hor))/60;
-                                seg=time-((hor*3600)+(min*60));
-                                txtTime.setText(hor+"h "+min+"m "+seg+"s");
-
-//                                Get Address
-                                String address = legsObject.getString("summary");
-                                txtAddress.setText(address);
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<String> call, Throwable t) {
-                            Toast.makeText(c, "" + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private void getDirection(double lat, double lng) throws IOException {
         ///Obtener La localisacion
         List<Address> addresses;
@@ -239,8 +167,6 @@ public class Llamada extends AppCompatActivity {
         float distanceInMeters = loc1.distanceTo(loc2);
         DecimalFormat df = new DecimalFormat("#.0");
         txtDistance.setText(df.format(distanceInMeters) + " Metros");
-
-
 
     }
 
@@ -270,6 +196,7 @@ public class Llamada extends AppCompatActivity {
     @Override
     public void onBackPressed(){
         if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()){
+            cancelBooking(customerId);
             super.onBackPressed();
             return;
         }else {

@@ -1,24 +1,21 @@
 package com.vecolsoft.deligo_conductor.Activitys;
 
 
-import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -62,30 +59,25 @@ import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
+import com.mapbox.services.android.navigation.ui.v5.listeners.NavigationListener;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
-import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
-import com.vecolsoft.deligo_conductor.Remote.GetGson;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
 import com.vecolsoft.deligo_conductor.Servicio.MyServicio;
 import com.vecolsoft.deligo_conductor.Utils.InternetConnection;
 import com.vecolsoft.deligo_conductor.Utils.Utils;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -99,7 +91,7 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 public class HomeBox extends AppCompatActivity implements
         OnMapReadyCallback,
         LocationEngineListener,
-        PermissionsListener {
+        PermissionsListener{
 
     // variables for adding location layer
     private MapboxMap mapboxMap;
@@ -132,7 +124,7 @@ public class HomeBox extends AppCompatActivity implements
 
     //elementos
     private TextView txtLocation;
-
+    private FloatingActionButton navigationButton;
 
 
     DatabaseReference drivers;
@@ -240,6 +232,15 @@ public class HomeBox extends AppCompatActivity implements
 
         //location TextView
         txtLocation = (TextView) findViewById(R.id.txtLocation);
+
+        //NavigationButon
+        navigationButton = (FloatingActionButton) findViewById(R.id.navigationButton);
+        navigationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNavigationRoute();
+            }
+        });
 
         //obtiene valor.
         boolean estado_switch = Utils.getValuePreference(prefs);
@@ -359,6 +360,8 @@ public class HomeBox extends AppCompatActivity implements
             originPosition = Point.fromLngLat(Common.MyLocation.getLongitude(), Common.MyLocation.getLatitude());
 
             getRoute(originPosition, destinationPosition);
+            Common.UnaSolaVes = true;
+
         }
 
 
@@ -377,6 +380,25 @@ public class HomeBox extends AppCompatActivity implements
         String txtLocationn = addresses.get(0).getAddressLine(0);
 
         txtLocation.setText(txtLocationn);
+    }
+
+    private void showNavigationRoute() {
+
+        boolean simulateRoute = false;
+        NavigationLauncherOptions options = NavigationLauncherOptions.builder()
+                .directionsRoute(currentRoute)
+                .shouldSimulateRoute(simulateRoute)
+                .build();
+
+        // Call this method with Context from within an Activity
+        NavigationLauncher.startNavigation(HomeBox.this, options);
+
+        Common.UnaSolaVes = null;
+        navigationButton.setVisibility(View.VISIBLE);
+
+
+
+
     }
 
     private void getRoute(Point origin, Point destination) {
@@ -407,7 +429,14 @@ public class HomeBox extends AppCompatActivity implements
                             navigationMapRoute = new NavigationMapRoute(null, mapView, mapboxMap, R.style.NavigationMapRoute);
                         }
                         navigationMapRoute.addRoute(currentRoute);
+
                         setRouteCameraPosition();
+
+                        if (Common.UnaSolaVes != null) {
+                            showNavigationRoute();
+                        }
+
+
                     }
 
                     @Override
@@ -415,6 +444,10 @@ public class HomeBox extends AppCompatActivity implements
                         Log.e(TAG, "Error: " + throwable.getMessage());
                     }
                 });
+
+
+
+
     }
 
     private void setRouteCameraPosition() {
@@ -704,6 +737,11 @@ public class HomeBox extends AppCompatActivity implements
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (locationEngine != null) {
@@ -734,7 +772,12 @@ public class HomeBox extends AppCompatActivity implements
             if (Common.OnSeguimiento != null) {
                 getRoute(originPosition, destinationPosition);
                 setRouteCameraPosition();
-                txtLocation.setVisibility(View.GONE);
+                try {
+                    getLocation();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             } else {
 
                 if (location_switch.isChecked()) {
@@ -795,6 +838,7 @@ public class HomeBox extends AppCompatActivity implements
         return true;
     }
 
+    
 
     ///////////////// MIOS
 

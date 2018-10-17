@@ -6,6 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".Activitys.HomeBox">
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/navigationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/location"
+        android:layout_alignParentEnd="true"
+        android:clickable="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="20dp"
+        mapbox:srcCompat="@drawable/ic_directions"
+        android:visibility="gone"/>
+
     <include
         android:id="@+id/toolbar"
         layout="@layout/toolbar" />

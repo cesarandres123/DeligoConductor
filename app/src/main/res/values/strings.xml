@@ -19,6 +19,8 @@
     <string name="title_activity_seguimiento">Map</string>
 
     <string name="access_token">pk.eyJ1IjoiY2VzYXJhbmRyZXMxMjMiLCJhIjoiY2ptcDVnNXE2MWJ2ZTNxanBqOTVmZ3JtbyJ9.uTIW5FJw3xbWqPUTWO0AJQ</string>
+    <string name="Boton_aceptar">Aceptar</string>
+    <string name="Boton_cancelar">Cancelar</string>
 
 
 </resources>
