@@ -65,6 +65,7 @@ import com.mapbox.services.android.navigation.ui.v5.listeners.NavigationListener
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
+import com.vecolsoft.deligo_conductor.Modelo.Driver;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
@@ -91,7 +92,7 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 public class HomeBox extends AppCompatActivity implements
         OnMapReadyCallback,
         LocationEngineListener,
-        PermissionsListener{
+        PermissionsListener {
 
     // variables for adding location layer
     private MapboxMap mapboxMap;
@@ -117,6 +118,7 @@ public class HomeBox extends AppCompatActivity implements
     private Toolbar toolbar;
     private CircleImageView circleImageView;
     private RelativeLayout perfil;
+    private TextView nombre;
     /////////////////////////////////
 
     IFCMService mfcmService;
@@ -153,6 +155,9 @@ public class HomeBox extends AppCompatActivity implements
     private static final String TAG = "MainActivity";
     private DirectionsRoute currentRoute;
     String customerId;
+
+
+    private DatabaseReference mDatabase;
 
 
     @Override
@@ -226,6 +231,24 @@ public class HomeBox extends AppCompatActivity implements
         //Toolbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        nombre = (TextView) findViewById(R.id.tvNombre);
+
+        //cambiar nombre i imagen
+        mDatabase = FirebaseDatabase.getInstance().getReference(Common.user_driver_tbl);
+        mDatabase.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                     Driver driver = dataSnapshot.getValue(Driver.class);
+
+                        nombre.setText(driver.getName());
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
 
         //Location switch
         location_switch = (SwitchCompat) findViewById(R.id.switch_Location);
@@ -397,8 +420,6 @@ public class HomeBox extends AppCompatActivity implements
         navigationButton.setVisibility(View.VISIBLE);
 
 
-
-
     }
 
     private void getRoute(Point origin, Point destination) {
@@ -444,8 +465,6 @@ public class HomeBox extends AppCompatActivity implements
                         Log.e(TAG, "Error: " + throwable.getMessage());
                     }
                 });
-
-
 
 
     }
@@ -592,25 +611,27 @@ public class HomeBox extends AppCompatActivity implements
                     public void onComplete(String key, DatabaseError error) {
 
                         //añadir marcador marker
-                        if (mCurrent != null) {
-                            mCurrent.remove();
+                        if (mapboxMap != null) {
+
+                            if (mCurrent != null) {
+                                mCurrent.remove();
+                            }
+                            // Create an Icon object for the marker to use
+                            IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
+                            Icon icon = iconFactory.fromResource(R.drawable.circlemo);
+
+                            mCurrent = mapboxMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
+                                    .icon(icon));
+
+                            CameraPosition position = new CameraPosition.Builder()
+                                    .target(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude())) // Sets the new camera position
+                                    .zoom(17) // Sets the zoom to level 10
+                                    .tilt(20) // Set the camera tilt to 20 degrees
+                                    .build(); // Builds the CameraPosition object from the builder
+
+                            mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
                         }
-                        // Create an Icon object for the marker to use
-                        IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
-                        Icon icon = iconFactory.fromResource(R.drawable.circlemo);
-
-                        mCurrent = mapboxMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
-                                .icon(icon));
-
-                        CameraPosition position = new CameraPosition.Builder()
-                                .target(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude())) // Sets the new camera position
-                                .zoom(17) // Sets the zoom to level 10
-                                .tilt(20) // Set the camera tilt to 20 degrees
-                                .build(); // Builds the CameraPosition object from the builder
-
-                        mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
-
 
                     }
                 });
@@ -838,7 +859,6 @@ public class HomeBox extends AppCompatActivity implements
         return true;
     }
 
-    
 
     ///////////////// MIOS
 
