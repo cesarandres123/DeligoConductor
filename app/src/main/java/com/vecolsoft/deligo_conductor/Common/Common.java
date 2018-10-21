@@ -23,7 +23,9 @@ public class Common {
 
     public static Boolean UnaSolaVes = null;
 
-    public static Driver currentUser;
+    public static Driver CurrentUser;
+
+    public static final int PICK_IMAGE_REQUEST = 9999;
 
 
     private static final String BASE_URL = "https://api.mapbox.com";

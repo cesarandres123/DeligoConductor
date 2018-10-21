@@ -90,17 +90,9 @@ public class Llamada extends AppCompatActivity {
         btnAceptar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Llamada.this,HomeBox.class);
-
-                //pasar los datos del cliente
-                intent.putExtra("lat",lat);
-                intent.putExtra("lng",lng);
-                intent.putExtra("customerId",customerId);
-
-                Common.OnSeguimiento = true;
-
-                startActivity(intent);
-                finish();
+                if (!TextUtils.isEmpty(customerId)) {
+                    aceptarBooking(customerId);
+                }
             }
         });
 
@@ -143,6 +135,43 @@ public class Llamada extends AppCompatActivity {
 
                     }
                 });
+    }
+
+    private void aceptarBooking(String customerId) {
+
+        Token token = new Token(customerId);
+
+        Notification notification = new Notification("Aceptado","El conductor ha acepytado tu solicitud.");
+        Sender sender = new Sender(token.getToken(),notification);
+
+        mFCMService.sendMessage(sender)
+                .enqueue(new Callback<FCMResponse>() {
+                    @Override
+                    public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
+                        if (response.body().success == 1) {
+                            Toast.makeText(Llamada.this, "Aceptado.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<FCMResponse> call, Throwable t) {
+
+                    }
+                });
+
+        Intent intent = new Intent(Llamada.this,HomeBox.class);
+
+        //pasar los datos del cliente
+        intent.putExtra("lat",lat);
+        intent.putExtra("lng",lng);
+        intent.putExtra("customerId",customerId);
+
+        Common.OnSeguimiento = true;
+
+        startActivity(intent);
+        finish();
+
     }
     private void getDirection(double lat, double lng) throws IOException {
         ///Obtener La localisacion

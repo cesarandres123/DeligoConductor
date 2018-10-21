@@ -3,10 +3,8 @@ package com.vecolsoft.deligo_conductor.Activitys;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -39,7 +37,6 @@ import com.leo.simplearcloader.SimpleArcDialog;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.Driver;
 import com.vecolsoft.deligo_conductor.R;
-import com.vecolsoft.deligo_conductor.Utils.Utils;
 
 import java.util.regex.Pattern;
 
@@ -47,8 +44,6 @@ import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
-
-    private SharedPreferences prefs;
 
     Button btnForgpass, btnSignIn, btnRegister;
     RelativeLayout rootLayout;
@@ -82,9 +77,6 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        prefs = getSharedPreferences("datos",Context.MODE_PRIVATE);
-
-
         //Init View
         btnSignIn = findViewById(R.id.btnSignIn);
         btnRegister = findViewById(R.id.btnRegister);
@@ -96,9 +88,6 @@ public class MainActivity extends AppCompatActivity {
         db = FirebaseDatabase.getInstance();
         users = db.getReference(Common.user_driver_tbl);
 
-
-        //Sharepreference
-        setCredentialsifExist();
 
         //Eventos
 
@@ -171,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         //Ingresar
-
         auth.signInWithEmailAndPassword(edtEmail.getText().toString(), edtPassword.getText().toString())
                 .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                     @Override
@@ -183,7 +171,11 @@ public class MainActivity extends AppCompatActivity {
                                 .addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
-                                        Common.currentUser = dataSnapshot.getValue(Driver.class);
+                                        //despues de asignar valor a Common.CurrentUser
+                                        Common.CurrentUser = dataSnapshot.getValue(Driver.class);
+                                        //iniciar actividad
+                                        startActivity(new Intent(MainActivity.this, HomeBox.class));
+                                        finish();
                                     }
 
                                     @Override
@@ -192,9 +184,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
 
-                        startActivity(new Intent(MainActivity.this, HomeBox.class));
-                        saveOnPreferences(edtEmail.getText().toString(),edtPassword.getText().toString());
-                        finish();
+
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -432,28 +422,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         dialogo.show();
-
-    }
-
-
-    private void saveOnPreferences(String edtEmail ,String edtPassword) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("email",edtEmail);
-        editor.putString("pass",edtPassword);
-        editor.apply();
-    }
-    private void setCredentialsifExist() {
-
-        final EditText edtEmail = rootLayout.findViewById(R.id.edtEmail);
-        final EditText edtPassword = rootLayout.findViewById(R.id.edtPassword);
-
-        String email = Utils.getUserEmailPrefes(prefs);
-        String password = Utils.getUserPassPrefes(prefs);
-
-        if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)) {
-            edtEmail.setText(email);
-            edtPassword.setText(password);
-        }
 
     }
 

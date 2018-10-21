@@ -23,9 +23,6 @@ import com.vecolsoft.deligo_conductor.Utils.Utils;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private SharedPreferences prefs;
-
-    FirebaseAuth auth;
     //verificar internet
     boolean connected = false;
     //Contexto
@@ -56,53 +53,25 @@ public class SplashActivity extends AppCompatActivity {
         CargaDialog.setCancelable(false);
         CargaDialog.show();
 
-        prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
-
-        auth = FirebaseAuth.getInstance();
-
         final Intent intentMain = new Intent(this, MainActivity.class);
-        final Intent intenHome = new Intent(this, HomeBox.class);
 
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
 
-                if (!TextUtils.isEmpty(Utils.getUserEmailPrefes(prefs)) && !TextUtils.isEmpty(Utils.getUserPassPrefes(prefs))) {
 
-                    //verificar internet
-                    if (InternetConnection.checkConnection(c)) {
-                        // Its Available...
+                //verificar internet
+                if (InternetConnection.checkConnection(c)) {
+                    // Its Available...
 
-                        //verificar si hay internet con ping
-                        if (InternetConnection.internetIsConnected(c)) {
+                    //verificar si hay internet con ping
+                    if (InternetConnection.internetIsConnected(c)) {
 
-                            startActivity(intenHome);
-                            CargaDialog.dismiss();
-                            finish();
-                            connected = true;
-                        } else {
-
-                            AlertDialog.Builder dialogo = new AlertDialog.Builder(c);
-                            dialogo.setTitle("Error de coneccion.");
-                            dialogo.setMessage("Fue imposible establecer una coneccion a internet");
-                            dialogo.setCancelable(false);
-                            dialogo.setIcon(R.drawable.ic_error);
-
-                            dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    finish();
-                                    startActivity(getIntent());
-                                }
-                            });
-
-                            dialogo.show();
-
-                        }
-
+                        startActivity(intentMain);
+                        CargaDialog.dismiss();
+                        finish();
+                        connected = true;
                     } else {
-                        // Not Available...
-                        connected = false;
 
                         AlertDialog.Builder dialogo = new AlertDialog.Builder(c);
                         dialogo.setTitle("Error de coneccion.");
@@ -122,15 +91,31 @@ public class SplashActivity extends AppCompatActivity {
 
                     }
 
-                }else {
-                    startActivity(intentMain);
-                    CargaDialog.dismiss();
-                    finish();
+                } else {
+                    // Not Available...
+                    connected = false;
+
+                    AlertDialog.Builder dialogo = new AlertDialog.Builder(c);
+                    dialogo.setTitle("Error de coneccion.");
+                    dialogo.setMessage("Fue imposible establecer una coneccion a internet");
+                    dialogo.setCancelable(false);
+                    dialogo.setIcon(R.drawable.ic_error);
+
+                    dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                            startActivity(getIntent());
+                        }
+                    });
+
+                    dialogo.show();
+
                 }
 
-            }
-        },1000);
 
+            }
+        }, 1000);
 
 
     }

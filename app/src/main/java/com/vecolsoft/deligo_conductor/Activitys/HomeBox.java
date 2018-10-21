@@ -18,6 +18,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,6 +28,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -157,8 +159,6 @@ public class HomeBox extends AppCompatActivity implements
     String customerId;
 
 
-    private DatabaseReference mDatabase;
-
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -207,6 +207,7 @@ public class HomeBox extends AppCompatActivity implements
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
+
         //perfil
         perfil = (RelativeLayout) findViewById(R.id.perfil);
         perfil.setOnClickListener(new View.OnClickListener() {
@@ -232,23 +233,17 @@ public class HomeBox extends AppCompatActivity implements
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         nombre = (TextView) findViewById(R.id.tvNombre);
+        nombre.setText(Common.CurrentUser.getName());
+        circleImageView = (CircleImageView) findViewById(R.id.profile_image);
 
-        //cambiar nombre i imagen
-        mDatabase = FirebaseDatabase.getInstance().getReference(Common.user_driver_tbl);
-        mDatabase.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                     Driver driver = dataSnapshot.getValue(Driver.class);
+        //load Avatar
+        if (Common.CurrentUser.getAvatarUrl() != null && !TextUtils.isEmpty(Common.CurrentUser.getAvatarUrl())) {
 
-                        nombre.setText(driver.getName());
-                    }
+            Glide.with(this)
+                    .load(Common.CurrentUser.getAvatarUrl())
+                    .into(circleImageView);
+        }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
 
         //Location switch
         location_switch = (SwitchCompat) findViewById(R.id.switch_Location);
@@ -261,7 +256,7 @@ public class HomeBox extends AppCompatActivity implements
         navigationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNavigationRoute();
+                //showNavigationRoute();
             }
         });
 
@@ -301,9 +296,12 @@ public class HomeBox extends AppCompatActivity implements
                     FirebaseDatabase.getInstance().goOffline(); //Desconectado
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorOFF));
                     stopLocationEngine();
-                    mCurrent.remove();
+
+                    if (mCurrent != null) {
+                        mCurrent.remove();
+                    }
+
                     txtLocation.setText("Sin ubucacion.");
-                    Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO INACTIVO", Snackbar.LENGTH_SHORT).show();
                     stopService(new Intent(c, MyServicio.class));
 
                 }
@@ -312,62 +310,13 @@ public class HomeBox extends AppCompatActivity implements
         });
 
         CheckGPSStatus();
+        verificarinternet();
+
 
         //GeoFire
         drivers = FirebaseDatabase.getInstance().getReference(Common.driver_tbl);
         geoFire = new GeoFire(drivers);
 
-        //verificar internet
-        if (InternetConnection.checkConnection(c)) {
-            // Its Available...
-
-            //verificar si hay internet con ping
-            if (InternetConnection.internetIsConnected(c)) {
-                enableLocationPlugin();
-                connected = true;
-                updateFirebaseToken();
-
-            } else {
-
-                AlertDialog.Builder dialogo = new AlertDialog.Builder(this);
-                dialogo.setTitle("Error de coneccion.");
-                dialogo.setMessage("Fue imposible establecer una coneccion a internet");
-                dialogo.setCancelable(false);
-                dialogo.setIcon(R.drawable.ic_error);
-
-                dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                        startActivity(getIntent());
-                    }
-                });
-
-                dialogo.show();
-
-            }
-
-        } else {
-            // Not Available...
-            connected = false;
-
-            AlertDialog.Builder dialogo = new AlertDialog.Builder(this);
-            dialogo.setTitle("Error de coneccion.");
-            dialogo.setMessage("Fue imposible establecer una coneccion a internet");
-            dialogo.setCancelable(false);
-            dialogo.setIcon(R.drawable.ic_error);
-
-            dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    finish();
-                    startActivity(getIntent());
-                }
-            });
-
-            dialogo.show();
-
-        }
 
         //SIstema de seguimieno
         if (getIntent() != null) {
@@ -388,21 +337,6 @@ public class HomeBox extends AppCompatActivity implements
         }
 
 
-    }
-
-    private void getLocation() throws IOException {
-
-        final double latitude = Common.MyLocation.getLatitude();
-        final double longitude = Common.MyLocation.getLongitude();
-
-        List<Address> addresses;
-        geocoder = new Geocoder(this, Locale.getDefault());
-
-        addresses = geocoder.getFromLocation(latitude, longitude, 1);
-
-        String txtLocationn = addresses.get(0).getAddressLine(0);
-
-        txtLocation.setText(txtLocationn);
     }
 
     private void showNavigationRoute() {
@@ -454,7 +388,7 @@ public class HomeBox extends AppCompatActivity implements
                         setRouteCameraPosition();
 
                         if (Common.UnaSolaVes != null) {
-                            showNavigationRoute();
+                            //showNavigationRoute();
                         }
 
 
@@ -859,13 +793,84 @@ public class HomeBox extends AppCompatActivity implements
         return true;
     }
 
-
     ///////////////// MIOS
 
+    private void verificarinternet() {
+        //verificar internet
+        if (InternetConnection.checkConnection(c)) {
+            // Its Available...
+
+            //verificar si hay internet con ping
+            if (InternetConnection.internetIsConnected(c)) {
+                enableLocationPlugin();
+                connected = true;
+                updateFirebaseToken();
+
+            } else {
+
+                AlertDialog.Builder dialogo = new AlertDialog.Builder(this);
+                dialogo.setTitle("Error de coneccion.");
+                dialogo.setMessage("Fue imposible establecer una coneccion a internet");
+                dialogo.setCancelable(false);
+                dialogo.setIcon(R.drawable.ic_error);
+
+                dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                        startActivity(getIntent());
+                    }
+                });
+
+                dialogo.show();
+
+            }
+
+        } else {
+            // Not Available...
+            connected = false;
+
+            AlertDialog.Builder dialogo = new AlertDialog.Builder(this);
+            dialogo.setTitle("Error de coneccion.");
+            dialogo.setMessage("Fue imposible establecer una coneccion a internet");
+            dialogo.setCancelable(false);
+            dialogo.setIcon(R.drawable.ic_error);
+
+            dialogo.setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    finish();
+                    startActivity(getIntent());
+                }
+            });
+
+            dialogo.show();
+
+        }
+    }
+
+    private void getLocation() throws IOException {
+
+        final double latitude = Common.MyLocation.getLatitude();
+        final double longitude = Common.MyLocation.getLongitude();
+
+        List<Address> addresses;
+        geocoder = new Geocoder(this, Locale.getDefault());
+
+        addresses = geocoder.getFromLocation(latitude, longitude, 1);
+
+        String txtLocationn = addresses.get(0).getAddressLine(0);
+
+        txtLocation.setText(txtLocationn);
+    }
+
     private void logout() {
+
+        FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        finish();
     }
 
     public void saveValuePreference(Context context, boolean valor) {

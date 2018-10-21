@@ -5,13 +5,11 @@ import android.os.SystemClock;
 
 public class myapp extends Application {
 
-
-
     @Override
     public void onCreate() {
         super.onCreate();
 
-        SystemClock.sleep(500);
+        SystemClock.sleep(1000);
 
 
     }
