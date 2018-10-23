@@ -71,7 +71,7 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/email_login"
                         android:inputType="textEmailAddress"
-                        android:text="rider1@gmail.com"
+                        android:text="driver1@gmail.com"
                         android:textColor="@color/colorAccent"
                         android:textColorHint="@color/colorAccent"
                         android:textSize="20sp" />

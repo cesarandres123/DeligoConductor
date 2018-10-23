@@ -47,7 +47,7 @@ public class MyServicio extends Service {
 
         // Se construye la notificación
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_motorcycle)
+                .setSmallIcon(R.drawable.ic_moto)
                 .setContentTitle("Servicio activo")
                 .setContentText("Esperando la solicitud de algun cliente.")
                 .setShowWhen(false);

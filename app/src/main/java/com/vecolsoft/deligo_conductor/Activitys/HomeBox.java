@@ -63,11 +63,9 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
-import com.mapbox.services.android.navigation.ui.v5.listeners.NavigationListener;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
-import com.vecolsoft.deligo_conductor.Modelo.Driver;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
@@ -233,7 +231,11 @@ public class HomeBox extends AppCompatActivity implements
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         nombre = (TextView) findViewById(R.id.tvNombre);
-        nombre.setText(Common.CurrentUser.getName());
+
+        if (Common.CurrentUser.getName() != null) {
+            nombre.setText(Common.CurrentUser.getName());
+        }
+
         circleImageView = (CircleImageView) findViewById(R.id.profile_image);
 
         //load Avatar
@@ -452,12 +454,7 @@ public class HomeBox extends AppCompatActivity implements
     private void EnviarNotificacionDeArribo(String customerId) {
         Token token = new Token(customerId);
 
-        //TODO
-        //poner a funcionar el mensaje con el nombre del conductor
-        //existe un problema con .getname()
-        //imposible invocar Common.currentuser.getname()
-
-        Notification notification = new Notification("Esta aqui!", "El conductor ha llegado.");
+        Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
         Sender sender = new Sender(token.getToken(), notification);
 
         mfcmService.sendMessage(sender).enqueue(new Callback<FCMResponse>() {
