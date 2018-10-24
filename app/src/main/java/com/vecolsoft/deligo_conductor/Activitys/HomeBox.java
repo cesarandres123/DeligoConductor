@@ -66,6 +66,7 @@ import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
+import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
@@ -77,8 +78,10 @@ import com.vecolsoft.deligo_conductor.Utils.InternetConnection;
 import com.vecolsoft.deligo_conductor.Utils.Utils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -454,10 +457,15 @@ public class HomeBox extends AppCompatActivity implements
     private void EnviarNotificacionDeArribo(String customerId) {
         Token token = new Token(customerId);
 
-        Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
-        Sender sender = new Sender(token.getToken(), notification);
+//        Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
+//        Sender sender = new Sender(token.getToken(), notification);
 
-        mfcmService.sendMessage(sender).enqueue(new Callback<FCMResponse>() {
+        Map<String,String> content = new HashMap<>();
+        content.put("title","Esta aqui!");
+        content.put("message",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
+        DataMessage dataMessage = new DataMessage(token.getToken(),content);
+
+        mfcmService.sendMessage(dataMessage).enqueue(new Callback<FCMResponse>() {
             @Override
             public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
                 if (response.body().success != 1) {
@@ -664,12 +672,14 @@ public class HomeBox extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
         mapView.onResume();
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mapView.onPause();
+
     }
 
     @Override

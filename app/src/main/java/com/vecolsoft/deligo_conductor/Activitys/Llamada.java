@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vecolsoft.deligo_conductor.Common.Common;
+import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
 import com.vecolsoft.deligo_conductor.Modelo.Notification;
 import com.vecolsoft.deligo_conductor.Modelo.Sender;
@@ -23,8 +24,10 @@ import com.vecolsoft.deligo_conductor.Remote.IFCMService;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -49,6 +52,11 @@ public class Llamada extends AppCompatActivity {
 
     //geocider location
     Geocoder geocoder;
+
+    //demo
+    final double latt = 7.123490 ;
+    final double lngg =  -73.132890;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,11 +116,15 @@ public class Llamada extends AppCompatActivity {
     private void cancelBooking(String customerId) {
         Token token = new Token(customerId);
 
-        Notification notification = new Notification("Cancel", "El conductor ha cancelado tu solicitud.");
-        Sender sender = new Sender(token.getToken(), notification);
+//        Notification notification = new Notification("Cancel", "El conductor ha cancelado tu solicitud.");
+//        Sender sender = new Sender(token.getToken(), notification);
 
+        Map<String,String> content = new HashMap<>();
+        content.put("title","Cancel");
+        content.put("message","El conductor ha cancelado tu solicitud.");
+        DataMessage dataMessage = new DataMessage(token.getToken(),content);
 
-        mFCMService.sendMessage(sender)
+        mFCMService.sendMessage(dataMessage)
                 .enqueue(new Callback<FCMResponse>() {
                     @Override
                     public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
@@ -132,11 +144,16 @@ public class Llamada extends AppCompatActivity {
     private void aceptarBooking(String customerId) {
         Token token = new Token(customerId);
 
-        Notification notification = new Notification("Aceptado", "El conductor ha aceptado tu solicitud.");
-        Sender sender = new Sender(token.getToken(), notification);
+//        Notification notification = new Notification("Aceptado", "El conductor ha aceptado tu solicitud.");
+//        Sender sender = new Sender(token.getToken(), notification);
+
+        Map<String,String> content = new HashMap<>();
+        content.put("title","Aceptado");
+        content.put("message","El conductor ha aceptado tu solicitud.");
+        DataMessage dataMessage = new DataMessage(token.getToken(),content);
 
 
-        mFCMService.sendMessage(sender)
+        mFCMService.sendMessage(dataMessage)
                 .enqueue(new Callback<FCMResponse>() {
                     @Override
                     public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
@@ -167,16 +184,19 @@ public class Llamada extends AppCompatActivity {
     }
 
     private void getDirection(double lat, double lng) throws IOException {
-        ///Obtener La localisacion
 
+        ///Obtener La localisacion
         List<Address> addresses;
         geocoder = new Geocoder(this, Locale.getDefault());
 
+
+
         addresses = geocoder.getFromLocation(lat, lng, 1);
 
-        String address = addresses.get(0).getAddressLine(0);
+        String street = addresses.get(0).getAddressLine(0);
 
-        txtAddress.setText(address);
+        txtAddress.setText(street);
+
 
         //obtener la distancia
         Location loc1 = new Location("");
