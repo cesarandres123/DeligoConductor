@@ -2,24 +2,18 @@ package com.vecolsoft.deligo_conductor.Modelo;
 
 public class Driver {
 
-    private String email,password,name,phone,avatarUrl;
+    private String email,password,name,phone,avatarUrl,rates;
 
     public Driver() {
     }
 
-    public Driver(String email, String password, String name, String phone) {
+    public Driver(String email, String password, String name, String phone, String avatarUrl, String rates) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phone = phone;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+        this.rates = rates;
     }
 
     public String getEmail() {
@@ -52,5 +46,21 @@ public class Driver {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getRates() {
+        return rates;
+    }
+
+    public void setRates(String rates) {
+        this.rates = rates;
     }
 }

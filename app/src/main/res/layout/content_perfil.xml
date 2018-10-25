@@ -33,8 +33,7 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/nombre_perfil"
@@ -43,10 +42,23 @@
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
                 android:text=""
-
+                android:textColor="@color/primary_text"
                 android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary_text"/>
+                android:textStyle="bold" />
+
+            <RatingBar
+                android:layout_below="@id/nombre_perfil"
+                android:id="@+id/ratingbarPerfil"
+                style="@style/Base.Widget.AppCompat.RatingBar.Indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:isIndicator="true"
+                android:numStars="5"
+                android:stepSize="0.5"
+                android:layout_marginBottom="5dp"/>
+
+
 
         </RelativeLayout>
 
@@ -56,9 +68,9 @@
         android:id="@+id/cvw_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_below="@+id/cvw_nombre"
         android:layout_alignParentStart="true"
+        android:layout_below="@+id/cvw_nombre"
+        android:layout_marginTop="10dp"
         android:background="@color/colorWhite">
 
         <LinearLayout
@@ -77,8 +89,8 @@
                     android:layout_height="wrap_content"
                     android:text="Info y numero de telefono"
 
-                    android:textSize="20sp"
-                    android:textColor="@color/secondary_text"/>
+                    android:textColor="@color/secondary_text"
+                    android:textSize="20sp" />
             </LinearLayout>
 
 
@@ -327,8 +339,6 @@
         </RelativeLayout>
 
     </android.support.v7.widget.CardView>
-
-
 
 
 </RelativeLayout>

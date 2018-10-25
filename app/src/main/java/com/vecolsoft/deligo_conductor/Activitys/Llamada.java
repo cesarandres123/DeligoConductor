@@ -16,8 +16,6 @@ import android.widget.Toast;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
-import com.vecolsoft.deligo_conductor.Modelo.Notification;
-import com.vecolsoft.deligo_conductor.Modelo.Sender;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
@@ -58,6 +56,7 @@ public class Llamada extends AppCompatActivity {
     final double lngg =  -73.132890;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,7 +77,7 @@ public class Llamada extends AppCompatActivity {
             public void onClick(View v) {
                 if (!TextUtils.isEmpty(customerId)) {
                     cancelBooking(customerId);
-                    Common.OnSeguimiento = null;
+                    Common.OnSERVICIO = null;
                 }
 
             }
@@ -176,7 +175,7 @@ public class Llamada extends AppCompatActivity {
         intent.putExtra("lng", lng);
         intent.putExtra("customerId", customerId);
 
-        Common.OnSeguimiento = true;
+        Common.OnSERVICIO = true;
 
         startActivity(intent);
         finish();

@@ -19,13 +19,12 @@ public class Common {
 
     public static Location MyLocation =  null;
 
-    public static Boolean OnSeguimiento = null;
-
-    public static Boolean UnaSolaVes = null;
+    public static Boolean OnSERVICIO = null;
 
     public static Driver CurrentUser;
 
     public static final int PICK_IMAGE_REQUEST = 9999;
+
 
 
     private static final String BASE_URL = "https://api.mapbox.com";

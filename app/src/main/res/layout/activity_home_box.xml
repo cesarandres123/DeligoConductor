@@ -6,41 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".Activitys.HomeBox">
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/navigationButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/location"
-        android:layout_alignParentEnd="true"
-        android:clickable="true"
-        android:layout_marginBottom="20dp"
-        android:layout_marginEnd="20dp"
-        mapbox:srcCompat="@drawable/ic_directions"
-        android:visibility="gone"/>
-
-    <include
-        android:id="@+id/toolbar"
-        layout="@layout/toolbar" />
-
-    <com.mapbox.mapboxsdk.maps.MapView
-        android:id="@+id/mapViewBox"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
-        mapbox:mapbox_cameraTargetLat="5"
-        mapbox:mapbox_cameraTargetLng="-74"
-        mapbox:mapbox_cameraZoom="5"
-        mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets" >
-
-    </com.mapbox.mapboxsdk.maps.MapView>
-
     <android.support.v7.widget.CardView
         android:id="@+id/location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/datos"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentStart="true"
+        android:layout_below="@+id/toolbar"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="5dp"
         android:layout_marginStart="5dp">
 
@@ -72,31 +44,73 @@
 
     </android.support.v7.widget.CardView>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/navigationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/location"
+        android:layout_alignParentEnd="true"
+        android:clickable="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="20dp"
+        mapbox:srcCompat="@drawable/ic_directions"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/toolbar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_below="@+id/toolbar">
+
+        <com.mapbox.mapboxsdk.maps.MapView
+            android:id="@+id/mapViewBox"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mapbox:mapbox_cameraTargetLat="5"
+            mapbox:mapbox_cameraTargetLng="-74"
+            mapbox:mapbox_cameraZoom="5"
+            mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets">
+
+        </com.mapbox.mapboxsdk.maps.MapView>
+
+
+    </LinearLayout>
+
+
+
     <android.support.v7.widget.CardView
-        android:id="@+id/datos"
+        android:id="@+id/control"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="30dp"
-        android:layout_marginEnd="5dp"
+        android:visibility="visible"
         android:layout_marginStart="5dp"
-        android:layout_marginTop="5dp">
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="10dp">
 
         <LinearLayout
+            android:id="@+id/botones"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:gravity="center"
             android:orientation="horizontal"
-            android:padding="10dp"
-            android:gravity="center">
+            android:padding="10dp">
 
             <LinearLayout
+                android:id="@+id/entregado"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout_marginEnd="5dp"
                 android:layout_marginStart="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
                 android:orientation="vertical">
 
                 <ImageView
@@ -105,27 +119,39 @@
                     android:layout_gravity="center"
                     android:layout_marginEnd="5dp"
                     android:layout_marginStart="5dp"
-                    android:src="@drawable/ic_location" />
+                    android:src="@drawable/ic_check" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:text="HOLA MUNDO" />
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="5dp"
+                    android:text="ENTREGADO" />
 
 
             </LinearLayout>
 
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="1dp"
+                android:layout_marginLeft="1dp"
+                android:layout_marginRight="1dp"
+                android:background="@color/divider" />
+
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout_marginEnd="5dp"
                 android:layout_marginStart="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
                 android:orientation="vertical">
 
                 <ImageView
@@ -134,21 +160,29 @@
                     android:layout_gravity="center"
                     android:layout_marginEnd="5dp"
                     android:layout_marginStart="5dp"
-                    android:src="@drawable/ic_location" />
+                    android:src="@drawable/perfil_ic_phone" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:text="HOLA MUNDO" />
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="5dp"
+                    android:text="LLAMAR CLIENTE" />
 
 
             </LinearLayout>
 
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="1dp"
+                android:layout_marginLeft="1dp"
+                android:layout_marginRight="1dp"
+                android:background="@color/divider" />
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
@@ -169,18 +203,25 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:text="HOLA MUNDO" />
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="5dp"
+                    android:text="VER RUTA" />
 
 
             </LinearLayout>
 
 
         </LinearLayout>
+
+
     </android.support.v7.widget.CardView>
+
+
+
+
+
 
 
 </RelativeLayout>

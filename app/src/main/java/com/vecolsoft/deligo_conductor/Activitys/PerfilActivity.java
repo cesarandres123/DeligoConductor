@@ -16,6 +16,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +55,7 @@ public class PerfilActivity extends AppCompatActivity {
     private TextView email_perfil;
     private TextView telefono_perfil;
     private RelativeLayout changePassPerfil;
+    private RatingBar Rate;
 
     private int mColors[] = {Color.parseColor("#009688"), // prymary
             Color.parseColor("#00796B"), // prrymary dark
@@ -109,6 +111,8 @@ public class PerfilActivity extends AppCompatActivity {
         email_perfil = (TextView) findViewById(R.id.email_perfil);
         telefono_perfil = (TextView) findViewById(R.id.telefono_perfil);
         changePassPerfil = (RelativeLayout) findViewById(R.id.changePassPerfil);
+        Rate = (RatingBar) findViewById(R.id.ratingbarPerfil);
+
 
         nombre_perfil.setText(Common.CurrentUser.getName());
         email_perfil.setText(Common.CurrentUser.getEmail());
@@ -119,6 +123,9 @@ public class PerfilActivity extends AppCompatActivity {
                 showDialogChangepwd();
             }
         });
+        //ratting convert
+        float rating = Float.parseFloat(Common.CurrentUser.getRates());
+        Rate.setRating(rating);
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

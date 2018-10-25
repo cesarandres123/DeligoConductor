@@ -16,6 +16,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -24,6 +25,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -68,8 +71,6 @@ import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
-import com.vecolsoft.deligo_conductor.Modelo.Notification;
-import com.vecolsoft.deligo_conductor.Modelo.Sender;
 import com.vecolsoft.deligo_conductor.Modelo.Token;
 import com.vecolsoft.deligo_conductor.R;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
@@ -85,6 +86,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import me.zhanghai.android.materialratingbar.MaterialRatingBar;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -122,6 +124,7 @@ public class HomeBox extends AppCompatActivity implements
     private CircleImageView circleImageView;
     private RelativeLayout perfil;
     private TextView nombre;
+    private RatingBar Rate;
     /////////////////////////////////
 
     IFCMService mfcmService;
@@ -130,6 +133,11 @@ public class HomeBox extends AppCompatActivity implements
     //elementos
     private TextView txtLocation;
     private FloatingActionButton navigationButton;
+    private CardView control;
+    private LinearLayout entregado;
+    private LinearLayout llamarCustomer;
+    private LinearLayout verRuta;
+
 
 
     DatabaseReference drivers;
@@ -208,6 +216,39 @@ public class HomeBox extends AppCompatActivity implements
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
+        control = (CardView) findViewById(R.id.control);
+        entregado = (LinearLayout) findViewById(R.id.entregado);
+        entregado.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                AlertDialog.Builder dialogo = new AlertDialog.Builder(HomeBox.this);
+                dialogo.setTitle("¿Has finalizado la entrega?");
+                dialogo.setCancelable(false);
+                dialogo.setIcon(R.drawable.ic_check);
+
+                dialogo.setPositiveButton("SI", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        EnviarNotificacionDeFinalizado(customerId);
+                        control.setVisibility(View.INVISIBLE);
+                        OnServicioFinish();
+                    }
+                });
+
+                dialogo.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+                dialogo.show();
+
+            }
+        });
+
 
         //perfil
         perfil = (RelativeLayout) findViewById(R.id.perfil);
@@ -249,6 +290,10 @@ public class HomeBox extends AppCompatActivity implements
                     .into(circleImageView);
         }
 
+        Rate = (RatingBar) findViewById(R.id.ratingbarTolbar);
+        float rating = Float.parseFloat(Common.CurrentUser.getRates().replace(",","."));
+        Rate.setRating(rating);
+
 
         //Location switch
         location_switch = (SwitchCompat) findViewById(R.id.switch_Location);
@@ -271,7 +316,7 @@ public class HomeBox extends AppCompatActivity implements
         location_switch.setChecked(estado_switch);
         ChangeColorBorderimage();
 
-        if (Common.OnSeguimiento != null) {
+        if (Common.OnSERVICIO != null) {
             location_switch.setClickable(false);
         }
 
@@ -323,7 +368,7 @@ public class HomeBox extends AppCompatActivity implements
         geoFire = new GeoFire(drivers);
 
 
-        //SIstema de seguimieno
+        //SIstema de servicio
         if (getIntent() != null) {
 
             riderlat = getIntent().getDoubleExtra("lat", -1.0);
@@ -331,13 +376,12 @@ public class HomeBox extends AppCompatActivity implements
             customerId = getIntent().getStringExtra("customerId");
         }
 
-        if (Common.OnSeguimiento != null) {
+        if (Common.OnSERVICIO != null) {
 
             destinationPosition = Point.fromLngLat(riderlng, riderlat);
             originPosition = Point.fromLngLat(Common.MyLocation.getLongitude(), Common.MyLocation.getLatitude());
 
             getRoute(originPosition, destinationPosition);
-            Common.UnaSolaVes = true;
 
         }
 
@@ -355,7 +399,6 @@ public class HomeBox extends AppCompatActivity implements
         // Call this method with Context from within an Activity
         NavigationLauncher.startNavigation(HomeBox.this, options);
 
-        Common.UnaSolaVes = null;
         navigationButton.setVisibility(View.VISIBLE);
 
 
@@ -392,9 +435,6 @@ public class HomeBox extends AppCompatActivity implements
 
                         setRouteCameraPosition();
 
-                        if (Common.UnaSolaVes != null) {
-                            //showNavigationRoute();
-                        }
 
 
                     }
@@ -457,8 +497,8 @@ public class HomeBox extends AppCompatActivity implements
     private void EnviarNotificacionDeArribo(String customerId) {
         Token token = new Token(customerId);
 
-//        Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
-//        Sender sender = new Sender(token.getToken(), notification);
+        //Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
+        //Sender sender = new Sender(token.getToken(), notification);
 
         Map<String,String> content = new HashMap<>();
         content.put("title","Esta aqui!");
@@ -478,6 +518,54 @@ public class HomeBox extends AppCompatActivity implements
 
             }
         });
+    }
+
+    private void EnviarNotificacionDeFinalizado(String customerId) {
+        Token token = new Token(customerId);
+        //Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
+        //Sender sender = new Sender(token.getToken(), notification);
+
+        Map<String,String> content = new HashMap<>();
+        content.put("title","Completado");
+        content.put("message",customerId);
+        DataMessage dataMessage = new DataMessage(token.getToken(),content);
+
+        mfcmService.sendMessage(dataMessage).enqueue(new Callback<FCMResponse>() {
+            @Override
+            public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
+                if (response.body().success != 1) {
+                    Toast.makeText(HomeBox.this, "Error.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FCMResponse> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void OnServicioFinish() {
+
+        location_switch.setClickable(true);
+        Common.OnSERVICIO = null;
+
+        if (mapboxMap != null){
+            mapboxMap.clear();
+        }
+
+        if (navigationMapRoute != null) {
+            navigationMapRoute.removeRoute();
+        }
+
+        if (location_switch.isChecked()) {
+            displayLocation();
+            try {
+                getLocation();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void updateFirebaseToken() {
@@ -501,7 +589,7 @@ public class HomeBox extends AppCompatActivity implements
         mapboxMap.getUiSettings().setTiltGesturesEnabled(false);
         mapboxMap.getUiSettings().setRotateGesturesEnabled(false);
 
-        if (Common.OnSeguimiento != null) {
+        if (Common.OnSERVICIO != null) {
 
             //Sistema de notificar arribo de conductor
             geoFire = new GeoFire(FirebaseDatabase.getInstance().getReference(Common.driver_tbl));
@@ -509,7 +597,32 @@ public class HomeBox extends AppCompatActivity implements
             geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
                 @Override
                 public void onKeyEntered(String key, GeoLocation location) {
+
                     EnviarNotificacionDeArribo(customerId);
+                    Toast.makeText(HomeBox.this, "Has llegado.", Toast.LENGTH_SHORT).show();
+
+                    AlertDialog.Builder dialogo = new AlertDialog.Builder(HomeBox.this);
+                    dialogo.setTitle("¿Has recivido el paquete?");
+                    dialogo.setCancelable(false);
+                    dialogo.setIcon(R.drawable.ic_check);
+
+                    dialogo.setPositiveButton("SI", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            control.setVisibility(View.VISIBLE);
+                        }
+                    });
+
+                    dialogo.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            Toast.makeText(HomeBox.this, "hay que chimbo ;(", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    dialogo.show();
                 }
 
                 @Override
@@ -709,7 +822,7 @@ public class HomeBox extends AppCompatActivity implements
         if (locationEngine != null) {
             locationEngine.deactivate();
         }
-        Common.OnSeguimiento = null;
+        Common.OnSERVICIO = null;
         mapView.onDestroy();
     }
 
@@ -731,7 +844,7 @@ public class HomeBox extends AppCompatActivity implements
         if (location != null) {
             Common.MyLocation = location;
 
-            if (Common.OnSeguimiento != null) {
+            if (Common.OnSERVICIO != null) {
                 getRoute(originPosition, destinationPosition);
                 setRouteCameraPosition();
                 try {

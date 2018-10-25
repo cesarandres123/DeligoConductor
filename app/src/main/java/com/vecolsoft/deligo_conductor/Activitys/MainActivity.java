@@ -318,6 +318,8 @@ public class MainActivity extends AppCompatActivity {
                                 user.setName(edtNameR.getText().toString());
                                 user.setPassword(edtPasswordR.getText().toString());
                                 user.setPhone(edtPhoneR.getText().toString());
+                                user.setAvatarUrl("");
+                                user.setRates("0");
 
                                 //usar el email como clave *driver.getEmail()* posible uso de nombre.
                                 users.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
