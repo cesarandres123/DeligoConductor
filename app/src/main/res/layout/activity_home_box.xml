@@ -82,10 +82,11 @@
             android:layout_below="@+id/dividiver4"
             android:layout_marginEnd="10dp"
             android:layout_marginStart="10dp"
-            app:cardBackgroundColor="@color/CardViewColor"
-            android:elevation="4dp">
+            app:cardCornerRadius="15dp"
+            app:cardBackgroundColor="@color/colorWhite">
 
             <LinearLayout
+                android:padding="5dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -102,14 +103,13 @@
 
                 <TextView
                     android:id="@+id/txtLocation_main"
-                    style="@style/TextAppearance.AppCompat.Title"
                     android:textSize="15sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginStart="5dp"
                     android:text="Sin ubucacion."
-                    android:textColor="@color/colorWhite" />
+                    android:textColor="@color/tercer_text" />
 
 
             </LinearLayout>
@@ -149,8 +149,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="40dp"
-                    android:elevation="4dp"
-                    app:cardBackgroundColor="@color/CardViewColor"
+                    app:cardBackgroundColor="@color/colorWhite"
                     app:cardCornerRadius="15dp">
 
                     <LinearLayout
@@ -165,11 +164,11 @@
                             android:orientation="vertical">
 
                             <TextView
-                                style="@style/TextAppearance.AppCompat.Body1"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:text="Servicio"
-                                android:textColor="@color/colorWhite" />
+                                android:textColor="@color/tercer_text"
+                                android:layout_marginBottom="5dp"/>
 
                             <android.support.v7.widget.SwitchCompat
                                 android:id="@+id/switch_Location_main"
@@ -193,8 +192,7 @@
                 <android.support.v7.widget.CardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:elevation="4dp"
-                    app:cardBackgroundColor="@color/CardViewColor"
+                    app:cardBackgroundColor="@color/colorWhite"
                     app:cardCornerRadius="15dp">
 
                     <LinearLayout
@@ -213,11 +211,10 @@
                             android:src="@drawable/ic_main_account" />
 
                         <TextView
-                            style="@style/TextAppearance.AppCompat.Body1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Perfil"
-                            android:textColor="@color/colorWhite" />
+                            android:textColor="@color/tercer_text" />
 
 
                     </LinearLayout>
@@ -240,8 +237,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="40dp"
-                    android:elevation="4dp"
-                    app:cardBackgroundColor="@color/CardViewColor"
+                    app:cardBackgroundColor="@color/colorWhite"
                     app:cardCornerRadius="15dp">
 
                     <LinearLayout
@@ -256,11 +252,10 @@
                             android:src="@drawable/ic_main_settings" />
 
                         <TextView
-                            style="@style/TextAppearance.AppCompat.Body1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Opciones"
-                            android:textColor="@color/colorWhite" />
+                            android:textColor="@color/tercer_text" />
 
 
                     </LinearLayout>
@@ -271,8 +266,7 @@
                 <android.support.v7.widget.CardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:elevation="4dp"
-                    app:cardBackgroundColor="@color/CardViewColor"
+                    app:cardBackgroundColor="@color/colorWhite"
                     app:cardCornerRadius="15dp">
 
                     <LinearLayout
@@ -287,11 +281,10 @@
                             android:src="@drawable/ic_main_history" />
 
                         <TextView
-                            style="@style/TextAppearance.AppCompat.Body1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Historial"
-                            android:textColor="@color/colorWhite" />
+                            android:textColor="@color/tercer_text" />
 
                     </LinearLayout>
 
@@ -362,8 +355,8 @@
                         android:layout_marginEnd="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginBottom="5dp"
-                        android:elevation="4dp"
-                        app:cardBackgroundColor="@color/CardViewColor">
+                        app:cardCornerRadius="15dp"
+                        app:cardBackgroundColor="@color/colorWhite">
 
                         <LinearLayout
                             android:id="@+id/Recojida"
@@ -383,8 +376,8 @@
                                 android:layout_marginEnd="5dp"
                                 android:layout_marginStart="5dp"
                                 android:visibility="visible"
-                                app:cardBackgroundColor="@color/CardViewColor2"
-                                app:cardCornerRadius="10dp">
+                                app:cardBackgroundColor="@color/colorWhite"
+                                app:cardCornerRadius="15dp">
 
                                 <LinearLayout
                                     android:layout_width="match_parent"
@@ -411,14 +404,13 @@
 
                                         <TextView
                                             android:id="@+id/id_customer"
-                                            style="@style/Base.TextAppearance.AppCompat.Title"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_marginEnd="5dp"
                                             android:layout_marginStart="5dp"
                                             android:layout_marginTop="5dp"
                                             android:text=""
-                                            android:textColor="@color/colorWhite" />
+                                            android:textColor="@color/tercer_text" />
 
                                         <LinearLayout
                                             android:layout_width="wrap_content"
@@ -435,13 +427,12 @@
 
                                             <TextView
                                                 android:id="@+id/telefono_customer"
-                                                style="@style/Base.TextAppearance.AppCompat.Medium"
                                                 android:layout_width="wrap_content"
                                                 android:layout_height="wrap_content"
                                                 android:layout_marginBottom="5dp"
                                                 android:autoLink="phone"
                                                 android:text=""
-                                                android:textColor="@color/colorWhite" />
+                                                android:textColor="@color/tercer_text" />
 
                                         </LinearLayout>
                                     </LinearLayout>
@@ -454,8 +445,8 @@
                                 android:id="@+id/punto_encuentro"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                app:cardBackgroundColor="@color/CardViewColor2"
-                                app:cardCornerRadius="10dp"
+                                app:cardBackgroundColor="@color/colorWhite"
+                                app:cardCornerRadius="15dp"
                                 android:layout_marginBottom="5dp"
                                 android:layout_marginTop="5dp">
 
@@ -463,15 +454,15 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="PUNTO DE ENCUENTRO"
-                                    android:textColor="@color/colorWhite"
                                     android:gravity="center"/>
 
                                 <TextView
+                                    android:padding="10dp"
                                     android:layout_marginTop="10dp"
                                     android:id="@+id/servicioTXV"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:textColor="@color/colorWhite"
+                                    android:textColor="@color/tercer_text"
                                     android:text=""
                                     style="@style/TextAppearance.AppCompat.Display1"/>
 
@@ -485,11 +476,11 @@
                                 android:id="@+id/control"
                                 android:layout_width="match_parent"
                                 android:layout_height="70dp"
-                                app:cardCornerRadius="10dp"
+                                app:cardCornerRadius="15dp"
                                 android:layout_marginBottom="5dp"
                                 android:layout_marginTop="5dp"
                                 android:visibility="visible"
-                                app:cardBackgroundColor="@color/CardViewColor2">
+                                app:cardBackgroundColor="@color/colorWhite">
 
                                 <LinearLayout
                                     android:id="@+id/botones"
@@ -596,7 +587,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text=""
-                            android:textColor="@color/colorWhite"
+                            android:textColor="@color/tercer_text"
                             android:layout_gravity="center"/>
 
                         </LinearLayout>
