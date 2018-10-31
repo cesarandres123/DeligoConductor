@@ -1,24 +1,24 @@
 package com.vecolsoft.deligo_conductor.Activitys;
 
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.SwitchCompat;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -27,7 +27,6 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +35,12 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -43,31 +48,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.mapbox.android.core.location.LocationEngine;
-import com.mapbox.android.core.location.LocationEngineListener;
-import com.mapbox.android.core.location.LocationEnginePriority;
-import com.mapbox.android.core.location.LocationEngineProvider;
-import com.mapbox.android.core.permissions.PermissionsListener;
-import com.mapbox.android.core.permissions.PermissionsManager;
-import com.mapbox.api.directions.v5.models.DirectionsResponse;
-import com.mapbox.api.directions.v5.models.DirectionsRoute;
-import com.mapbox.geojson.Point;
-import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.mapboxsdk.annotations.Icon;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-import com.mapbox.mapboxsdk.maps.MapView;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
-import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
-import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.vecolsoft.deligo_conductor.Common.Common;
 import com.vecolsoft.deligo_conductor.Modelo.DataMessage;
 import com.vecolsoft.deligo_conductor.Modelo.FCMResponse;
@@ -83,10 +63,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
-import me.zhanghai.android.materialratingbar.MaterialRatingBar;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -94,37 +72,28 @@ import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 
-public class HomeBox extends AppCompatActivity implements
-        OnMapReadyCallback,
-        LocationEngineListener,
-        PermissionsListener {
+public class HomeBox extends AppCompatActivity {
 
-    // variables for adding location layer
-    private MapboxMap mapboxMap;
-    private PermissionsManager permissionsManager;
-    private LocationEngine locationEngine;
+    //Sistema de localisacion
+    FusedLocationProviderClient fusedLocationProviderClient;
+    LocationCallback locationCallback;
+    private LocationRequest mLocationRequest;
     private LocationManager locationManager;
-    private NavigationMapRoute navigationMapRoute;
-    //geocider location
-    Geocoder geocoder;
-
+    private static final int MY_PERMISSION_REQUEST_CODE = 7000;
     private static int UPDATE_INTERVAL = 5000;
     private static int FASTEST_INTERVAL = 3000;
     private static int DISPLACEMENT = 10;
+    Geocoder geocoder;
 
-    // variable for adding map
-    private MapView mapView;
-    private Marker mCurrent;
-
+    //SharedPreferences para el swicht
     private SharedPreferences prefs;
 
-
-    //elementos del toolbar
-    private Toolbar toolbar;
+    //elementos del main
     private CircleImageView circleImageView;
-    private RelativeLayout perfil;
+    private LinearLayout perfil;
     private TextView nombre;
     private RatingBar Rate;
+    SwitchCompat location_switch;
     /////////////////////////////////
 
     IFCMService mfcmService;
@@ -132,18 +101,15 @@ public class HomeBox extends AppCompatActivity implements
 
     //elementos
     private TextView txtLocation;
-    private FloatingActionButton navigationButton;
-    private CardView control;
     private LinearLayout entregado;
     private LinearLayout llamarCustomer;
     private LinearLayout verRuta;
 
 
-
     DatabaseReference drivers;
     GeoFire geoFire;
 
-    SwitchCompat location_switch;
+
 
     //Contexto
     private Context c = this;
@@ -160,13 +126,23 @@ public class HomeBox extends AppCompatActivity implements
     //sistema de seguimiento
     double riderlng = 1.0;
     double riderlat = 1.0;
-    private Point originPosition;
-    private Point destinationPosition;
-    private Marker destinationMarker;
-    private static final String TAG = "MainActivity";
-    private DirectionsRoute currentRoute;
     String customerId;
+    public String street;
+    public String sid_customer;
+    public String simg_customer;
+    public String phone_customer;
 
+    ///////////////Voy acomodando lo nuevo
+
+    private TextView ServicioTXV;
+    private TextView SinServicioTXV;
+    private LinearLayout Recojida;
+    private LinearLayout botonesLayout;
+    private CircleImageView img_customer;
+    private TextView id_customer;
+    private TextView telefono_customer;
+    private LinearLayout recogido;
+    private CardView punto_encuentro;
 
 
     @Override
@@ -176,10 +152,12 @@ public class HomeBox extends AppCompatActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         //Bolquear rotacion
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         super.onCreate(savedInstanceState);
-        Mapbox.getInstance(this, getString(R.string.access_token));
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         //Sistema de precencia
         OnlineRef = FirebaseDatabase.getInstance().getReference().child(".info/connected");
@@ -212,18 +190,13 @@ public class HomeBox extends AppCompatActivity implements
         prefs = getSharedPreferences("datos", Context.MODE_PRIVATE);
 
 
-        mapView = (MapView) findViewById(R.id.mapViewBox);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
-
-        control = (CardView) findViewById(R.id.control);
         entregado = (LinearLayout) findViewById(R.id.entregado);
         entregado.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 AlertDialog.Builder dialogo = new AlertDialog.Builder(HomeBox.this);
-                dialogo.setTitle("¿Has finalizado la entrega?");
+                dialogo.setTitle("¿Has llegado al punto de encuentro?");
                 dialogo.setCancelable(false);
                 dialogo.setIcon(R.drawable.ic_check);
 
@@ -232,7 +205,6 @@ public class HomeBox extends AppCompatActivity implements
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                         EnviarNotificacionDeFinalizado(customerId);
-                        control.setVisibility(View.INVISIBLE);
                         OnServicioFinish();
                     }
                 });
@@ -249,38 +221,23 @@ public class HomeBox extends AppCompatActivity implements
             }
         });
 
-
         //perfil
-        perfil = (RelativeLayout) findViewById(R.id.perfil);
+        perfil = (LinearLayout) findViewById(R.id.perfil_layout);
         perfil.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 startActivity(new Intent(HomeBox.this, PerfilActivity.class));
-                //overridePendingTransition( R.anim.slide_in_up, R.anim.slide_out_up );
-
             }
         });
 
         //CircleImageView
-        circleImageView = (CircleImageView) findViewById(R.id.profile_image);
-        circleImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Toast.makeText(Home.this, "bruh!!", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        //Toolbar
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        nombre = (TextView) findViewById(R.id.tvNombre);
+        circleImageView = (CircleImageView) findViewById(R.id.img_main);
+        //nombre
+        nombre = (TextView) findViewById(R.id.nombre_main);
 
         if (Common.CurrentUser.getName() != null) {
             nombre.setText(Common.CurrentUser.getName());
         }
-
-        circleImageView = (CircleImageView) findViewById(R.id.profile_image);
 
         //load Avatar
         if (Common.CurrentUser.getAvatarUrl() != null && !TextUtils.isEmpty(Common.CurrentUser.getAvatarUrl())) {
@@ -290,25 +247,26 @@ public class HomeBox extends AppCompatActivity implements
                     .into(circleImageView);
         }
 
-        Rate = (RatingBar) findViewById(R.id.ratingbarTolbar);
-        float rating = Float.parseFloat(Common.CurrentUser.getRates().replace(",","."));
+        Rate = (RatingBar) findViewById(R.id.ratingbar_main);
+        float rating = Float.parseFloat(Common.CurrentUser.getRates().replace(",", "."));
         Rate.setRating(rating);
 
 
         //Location switch
-        location_switch = (SwitchCompat) findViewById(R.id.switch_Location);
+        location_switch = (SwitchCompat) findViewById(R.id.switch_Location_main);
 
         //location TextView
-        txtLocation = (TextView) findViewById(R.id.txtLocation);
+        img_customer = (CircleImageView) findViewById(R.id.img_customer);
+        id_customer = (TextView) findViewById(R.id.id_customer);
+        telefono_customer = (TextView) findViewById(R.id.telefono_customer);
 
-        //NavigationButon
-        navigationButton = (FloatingActionButton) findViewById(R.id.navigationButton);
-        navigationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //showNavigationRoute();
-            }
-        });
+        txtLocation = (TextView) findViewById(R.id.txtLocation_main);
+        ServicioTXV = (TextView) findViewById(R.id.servicioTXV);
+        Recojida = (LinearLayout) findViewById(R.id.Recojida);
+        SinServicioTXV = (TextView) findViewById(R.id.SinServicioTXV);
+        botonesLayout = (LinearLayout) findViewById(R.id.botonesLayout);
+        punto_encuentro = (CardView) findViewById(R.id.punto_encuentro);
+
 
         //obtiene valor.
         boolean estado_switch = Utils.getValuePreference(prefs);
@@ -331,28 +289,31 @@ public class HomeBox extends AppCompatActivity implements
                     CheckGPSStatus();
                     FirebaseDatabase.getInstance().goOnline(); // conectado
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorON));
-                    displayLocation();
 
-                    try {
-                        getLocation(); //mostar ubicacion en textview
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (ActivityCompat.checkSelfPermission(HomeBox.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                            ActivityCompat.checkSelfPermission(HomeBox.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
                     }
-                    Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO ACTIVO", Snackbar.LENGTH_SHORT).show();
+                    buildLocationCallBack();
+                    buildLocationRequest();
+                    fusedLocationProviderClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
+
+                    Toast.makeText(HomeBox.this, "SERVICIO ACTIVO", Toast.LENGTH_SHORT).show();
                     startService(new Intent(c, MyServicio.class));
+                    SinServicioTXV.setText("Esperando solicitud de servicio");
+
 
                 } else {
-                    Snackbar.make(Objects.requireNonNull(mapView), "SERVICIO INACTIVO", Snackbar.LENGTH_SHORT).show();
+                    Toast.makeText(HomeBox.this, "SERVICIO INACTIVO", Toast.LENGTH_SHORT).show();
                     FirebaseDatabase.getInstance().goOffline(); //Desconectado
                     circleImageView.setBorderColor(getResources().getColor(R.color.colorOFF));
-                    stopLocationEngine();
 
-                    if (mCurrent != null) {
-                        mCurrent.remove();
-                    }
+                    fusedLocationProviderClient.removeLocationUpdates(locationCallback);
 
                     txtLocation.setText("Sin ubucacion.");
                     stopService(new Intent(c, MyServicio.class));
+                    SinServicioTXV.setText("Servicio detenido");
+
 
                 }
 
@@ -374,136 +335,53 @@ public class HomeBox extends AppCompatActivity implements
             riderlat = getIntent().getDoubleExtra("lat", -1.0);
             riderlng = getIntent().getDoubleExtra("lng", -1.0);
             customerId = getIntent().getStringExtra("customerId");
+            street = getIntent().getStringExtra("direccion");
+            sid_customer = getIntent().getStringExtra("sid_customer");
+            simg_customer = getIntent().getStringExtra("simg_customer");
+            phone_customer = getIntent().getStringExtra("phone_customer");
+
         }
 
         if (Common.OnSERVICIO != null) {
 
-            destinationPosition = Point.fromLngLat(riderlng, riderlat);
-            originPosition = Point.fromLngLat(Common.MyLocation.getLongitude(), Common.MyLocation.getLatitude());
+            Toast.makeText(this, "En Servicio.", Toast.LENGTH_SHORT).show();
 
-            getRoute(originPosition, destinationPosition);
+            //getRoute(originPosition, destinationPosition);
+            NotificacionDeArrivo();
 
-        }
+            //load Avatar
+            Glide.with(this)
+                    .load(simg_customer)
+                    .into(img_customer);
 
+            id_customer.setText(sid_customer);
+            telefono_customer.setText(phone_customer);
 
-    }
+            Recojida.setVisibility(View.VISIBLE);
+            SinServicioTXV.setVisibility(View.INVISIBLE);
 
-    private void showNavigationRoute() {
+            botonesLayout.setVisibility(View.GONE);
 
-        boolean simulateRoute = false;
-        NavigationLauncherOptions options = NavigationLauncherOptions.builder()
-                .directionsRoute(currentRoute)
-                .shouldSimulateRoute(simulateRoute)
-                .build();
-
-        // Call this method with Context from within an Activity
-        NavigationLauncher.startNavigation(HomeBox.this, options);
-
-        navigationButton.setVisibility(View.VISIBLE);
-
-
-    }
-
-    private void getRoute(Point origin, Point destination) {
-        NavigationRoute.builder(this)
-                .accessToken(Mapbox.getAccessToken())
-                .origin(origin)
-                .destination(destination)
-                .build()
-                .getRoute(new Callback<DirectionsResponse>() {
-                    @Override
-                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-                        // You can get the generic HTTP info about the response
-                        Log.d(TAG, "Response code: " + response.code());
-                        if (response.body() == null) {
-                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
-                            return;
-                        } else if (response.body().routes().size() < 1) {
-                            Log.e(TAG, "No routes found");
-                            return;
-                        }
-
-                        currentRoute = response.body().routes().get(0);
-
-                        // Draw the route on the map
-                        if (navigationMapRoute != null) {
-                            navigationMapRoute.removeRoute();
-                        } else {
-                            navigationMapRoute = new NavigationMapRoute(null, mapView, mapboxMap, R.style.NavigationMapRoute);
-                        }
-                        navigationMapRoute.addRoute(currentRoute);
-
-                        setRouteCameraPosition();
-
-
-
-                    }
-
-                    @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
-                        Log.e(TAG, "Error: " + throwable.getMessage());
-                    }
-                });
-
-
-    }
-
-    private void setRouteCameraPosition() {
-
-        if (Common.MyLocation != null) {
-            if (location_switch.isChecked()) {
-
-                final double latitude = Common.MyLocation.getLatitude();
-                final double longitude = Common.MyLocation.getLongitude();
-
-                //update to firebase
-                geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
-                    @Override
-                    public void onComplete(String key, DatabaseError error) {
-
-                        //añadir marcador conductor
-                        if (mCurrent != null) {
-                            mCurrent.remove();
-                        }
-                        // Create an Icon object for the marker to use
-                        IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
-                        Icon icon = iconFactory.fromResource(R.drawable.circlemo);
-
-                        mCurrent = mapboxMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
-                                .icon(icon));
-
-
-                        //añadir marcador destino
-                        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(riderlat, riderlng)));
-
-                        LatLngBounds latLngBounds = new LatLngBounds.Builder()
-                                .include(new LatLng(originPosition.latitude(), originPosition.longitude()))
-                                .include(new LatLng(destinationPosition.latitude(), destinationPosition.longitude()))
-                                .build();
-
-                        mapboxMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50));
-
-
-                    }
-                });
+            if (street != null) {
+                ServicioTXV.setText(street);
             }
-        } else {
-            Log.d("ERROR", "No se puede obtener la localisacion.");
+
+
         }
+
+
     }
 
     private void EnviarNotificacionDeArribo(String customerId) {
-        Token token = new Token(customerId);
 
+        Token token = new Token(customerId);
         //Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
         //Sender sender = new Sender(token.getToken(), notification);
 
-        Map<String,String> content = new HashMap<>();
-        content.put("title","Esta aqui!");
-        content.put("message",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
-        DataMessage dataMessage = new DataMessage(token.getToken(),content);
+        Map<String, String> content = new HashMap<>();
+        content.put("title", "Esta aqui!");
+        content.put("message", String.format("El conductor %s ha llegado.", Common.CurrentUser.getName()));
+        DataMessage dataMessage = new DataMessage(token.getToken(), content);
 
         mfcmService.sendMessage(dataMessage).enqueue(new Callback<FCMResponse>() {
             @Override
@@ -525,10 +403,10 @@ public class HomeBox extends AppCompatActivity implements
         //Notification notification = new Notification("Esta aqui!",String.format("El conductor %s ha llegado.",Common.CurrentUser.getName()));
         //Sender sender = new Sender(token.getToken(), notification);
 
-        Map<String,String> content = new HashMap<>();
-        content.put("title","Completado");
-        content.put("message",customerId);
-        DataMessage dataMessage = new DataMessage(token.getToken(),content);
+        Map<String, String> content = new HashMap<>();
+        content.put("title", "Completado");
+        content.put("message", customerId);
+        DataMessage dataMessage = new DataMessage(token.getToken(), content);
 
         mfcmService.sendMessage(dataMessage).enqueue(new Callback<FCMResponse>() {
             @Override
@@ -550,22 +428,14 @@ public class HomeBox extends AppCompatActivity implements
         location_switch.setClickable(true);
         Common.OnSERVICIO = null;
 
-        if (mapboxMap != null){
-            mapboxMap.clear();
-        }
-
-        if (navigationMapRoute != null) {
-            navigationMapRoute.removeRoute();
-        }
 
         if (location_switch.isChecked()) {
             displayLocation();
-            try {
-                getLocation();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
+
+        Recojida.setVisibility(View.INVISIBLE);
+        SinServicioTXV.setVisibility(View.VISIBLE);
+        botonesLayout.setVisibility(View.VISIBLE);
     }
 
     private void updateFirebaseToken() {
@@ -579,16 +449,7 @@ public class HomeBox extends AppCompatActivity implements
 
     }
 
-    @Override
-    public void onMapReady(MapboxMap mapboxMap) {
-
-
-        this.mapboxMap = mapboxMap;
-        mapboxMap.getUiSettings().setAttributionEnabled(false);
-        mapboxMap.getUiSettings().setLogoEnabled(false);
-        mapboxMap.getUiSettings().setTiltGesturesEnabled(false);
-        mapboxMap.getUiSettings().setRotateGesturesEnabled(false);
-
+    private void NotificacionDeArrivo() {
         if (Common.OnSERVICIO != null) {
 
             //Sistema de notificar arribo de conductor
@@ -598,31 +459,10 @@ public class HomeBox extends AppCompatActivity implements
                 @Override
                 public void onKeyEntered(String key, GeoLocation location) {
 
+                    entregado.setVisibility(View.VISIBLE);
                     EnviarNotificacionDeArribo(customerId);
                     Toast.makeText(HomeBox.this, "Has llegado.", Toast.LENGTH_SHORT).show();
 
-                    AlertDialog.Builder dialogo = new AlertDialog.Builder(HomeBox.this);
-                    dialogo.setTitle("¿Has recivido el paquete?");
-                    dialogo.setCancelable(false);
-                    dialogo.setIcon(R.drawable.ic_check);
-
-                    dialogo.setPositiveButton("SI", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            control.setVisibility(View.VISIBLE);
-                        }
-                    });
-
-                    dialogo.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            Toast.makeText(HomeBox.this, "hay que chimbo ;(", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
-                    dialogo.show();
                 }
 
                 @Override
@@ -651,164 +491,116 @@ public class HomeBox extends AppCompatActivity implements
 
     private void displayLocation() {
 
-        if (Common.MyLocation != null) {
-            if (location_switch.isChecked()) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                final double latitude = Common.MyLocation.getLatitude();
-                final double longitude = Common.MyLocation.getLongitude();
-
-                //update to firebase
-                geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
+            return;
+        }
+        fusedLocationProviderClient.getLastLocation()
+                .addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
-                    public void onComplete(String key, DatabaseError error) {
+                    public void onSuccess(android.location.Location location) {
+                        Common.MyLocation = location;
 
-                        //añadir marcador marker
-                        if (mapboxMap != null) {
+                        if (Common.MyLocation != null) {
+                            if (location_switch.isChecked()) {
 
-                            if (mCurrent != null) {
-                                mCurrent.remove();
+                                final double latitude = Common.MyLocation.getLatitude();
+                                final double longitude = Common.MyLocation.getLongitude();
+
+                                //update to firebase
+                                geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
+                                    @Override
+                                    public void onComplete(String key, DatabaseError error) {
+
+                                    }
+                                });
+
+                                try {
+                                    getLocation();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+
                             }
-                            // Create an Icon object for the marker to use
-                            IconFactory iconFactory = IconFactory.getInstance(HomeBox.this);
-                            Icon icon = iconFactory.fromResource(R.drawable.circlemo);
-
-                            mCurrent = mapboxMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude()))
-                                    .icon(icon));
-
-                            CameraPosition position = new CameraPosition.Builder()
-                                    .target(new LatLng(Common.MyLocation.getLatitude(), Common.MyLocation.getLongitude())) // Sets the new camera position
-                                    .zoom(17) // Sets the zoom to level 10
-                                    .tilt(20) // Set the camera tilt to 20 degrees
-                                    .build(); // Builds the CameraPosition object from the builder
-
-                            mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
+                        } else {
+                            Log.d("ERROR", "No se puede obtener la localisacion.");
                         }
 
                     }
                 });
-            }
-        } else {
-            Log.d("ERROR", "No se puede obtener la localisacion.");
-        }
     }
 
-    @SuppressWarnings({"MissingPermission"})
-    private void enableLocationPlugin() {
-        // Check if permissions are enabled and if not request
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            initializeLocationEngine();
+    private void setupLocation() {
 
-            //autoIniciar el servicio
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            //Request Permissions
+            ActivityCompat.requestPermissions(this, new String[]{
+
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSION_REQUEST_CODE);
+        } else {
+
+            buildLocationRequest();
+            buildLocationCallBack();
             if (location_switch.isChecked()) {
+                displayLocation();
+            }
+        }
 
-                if (MyServicio.isServiceCreated()) {
-                    Log.e("logogo", "servicio no ejecutandoce");
+    }
 
-                } else {
-                    startService(new Intent(c, MyServicio.class));
-
+    private void buildLocationCallBack() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                for (android.location.Location location : locationResult.getLocations()) {
+                    Common.MyLocation = location;
                 }
+                displayLocation();
+
             }
+        };
 
-        } else {
-            permissionsManager = new PermissionsManager(this);
-            permissionsManager.requestLocationPermissions(this);
-        }
     }
 
-    private void stopLocationEngine() {
+    private void buildLocationRequest() {
 
-        if (locationEngine != null) {
-            locationEngine.deactivate();
-            if (mCurrent != null) {
-                mCurrent.remove();
-            }
-        }
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setSmallestDisplacement(DISPLACEMENT);
     }
 
-    @SuppressWarnings({"MissingPermission"})
-    private void initializeLocationEngine() {
-        LocationEngineProvider locationEngineProvider = new LocationEngineProvider(this);
-        locationEngine = locationEngineProvider.obtainBestLocationEngineAvailable();
-        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
-
-        /////////////////////////////////////////
-        locationEngine.setInterval(UPDATE_INTERVAL);
-        locationEngine.setFastestInterval(FASTEST_INTERVAL);
-        locationEngine.setSmallestDisplacement(DISPLACEMENT);
-        /////////////////////////////////////////
-
-        locationEngine.activate();
-
-        Location lastLocation = locationEngine.getLastLocation();
-        if (lastLocation != null) {
-            Common.MyLocation = lastLocation;
-        } else {
-            locationEngine.addLocationEngineListener(this);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @Override
-    public void onExplanationNeeded(List<String> permissionsToExplain) {
-        //Toast.makeText(this, R.string.user_location_permission_explanation, Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onPermissionResult(boolean granted) {
-        if (granted) {
-            enableLocationPlugin();
-        } else {
-            //Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
-            finish();
-        }
-    }
-
-    @SuppressWarnings({"MissingPermission"})
     @Override
     protected void onStart() {
         super.onStart();
-
-        if (locationEngine != null) {
-            locationEngine.requestLocationUpdates();
-        }
-        mapView.onStart();
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mapView.onResume();
 
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mapView.onPause();
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (locationEngine != null) {
-            locationEngine.removeLocationUpdates();
-        }
-        mapView.onStop();
 
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
     }
 
     @Override
@@ -819,54 +611,12 @@ public class HomeBox extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (locationEngine != null) {
-            locationEngine.deactivate();
-        }
         Common.OnSERVICIO = null;
-        mapView.onDestroy();
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        mapView.onLowMemory();
-    }
-
-    @Override
-    @SuppressWarnings("MissingPermission")
-    public void onConnected() {
-        locationEngine.requestLocationUpdates();
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (location != null) {
-            Common.MyLocation = location;
-
-            if (Common.OnSERVICIO != null) {
-                getRoute(originPosition, destinationPosition);
-                setRouteCameraPosition();
-                try {
-                    getLocation();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            } else {
-
-                if (location_switch.isChecked()) {
-                    displayLocation();
-                    try {
-                        getLocation();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            }
-        }
-
     }
 
     @Override
@@ -922,7 +672,7 @@ public class HomeBox extends AppCompatActivity implements
 
             //verificar si hay internet con ping
             if (InternetConnection.internetIsConnected(c)) {
-                enableLocationPlugin();
+                setupLocation();
                 connected = true;
                 updateFirebaseToken();
 
@@ -1003,8 +753,12 @@ public class HomeBox extends AppCompatActivity implements
 
         if (location_switch.isChecked()) {
             circleImageView.setBorderColor(getResources().getColor(R.color.colorON));
+            SinServicioTXV.setText("Esperando solicitud de servicio");
+
         } else {
             circleImageView.setBorderColor(getResources().getColor(R.color.colorOFF));
+            SinServicioTXV.setText("Servicio detenido");
+
         }
     }
 

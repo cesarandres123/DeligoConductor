@@ -27,6 +27,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
     double lgn;
     String Customer;
 
+
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
 
@@ -36,6 +37,10 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
             String customer = data.get("customer");
             String LAT = data.get("lat");
             String LNG = data.get("lng");
+
+            String sid_customer = data.get("sid_customer");
+            String simg_customer = data.get("simg_customer");
+            String phone_customer = data.get("phone_customer");
 
             lat = Double.parseDouble( LAT.replace(",",".") );
             lgn = Double.parseDouble( LNG.replace(",",".") );
@@ -48,6 +53,9 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
             intent.putExtra("lat", lat);
             intent.putExtra("lng", lgn);
             intent.putExtra("customer", customer);
+            intent.putExtra("sid_customer", sid_customer);
+            intent.putExtra("simg_customer", simg_customer);
+            intent.putExtra("phone_customer", phone_customer);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }

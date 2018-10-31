@@ -43,7 +43,14 @@ public class Llamada extends AppCompatActivity {
 
     String customerId;
 
+    String sid_customer;
+    String simg_customer;
+    String phone_customer;
+
+    public String street;
+
     double lat, lng;
+
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
@@ -101,6 +108,10 @@ public class Llamada extends AppCompatActivity {
             lat = getIntent().getDoubleExtra("lat", -1.0);
             lng = getIntent().getDoubleExtra("lng", -1.0);
             customerId = getIntent().getStringExtra("customer");
+
+            sid_customer = getIntent().getStringExtra("sid_customer");
+            simg_customer = getIntent().getStringExtra("simg_customer");
+            phone_customer = getIntent().getStringExtra("phone_customer");
 
 
 
@@ -175,6 +186,12 @@ public class Llamada extends AppCompatActivity {
         intent.putExtra("lng", lng);
         intent.putExtra("customerId", customerId);
 
+        intent.putExtra("direccion",street);
+
+        intent.putExtra("sid_customer",sid_customer);
+        intent.putExtra("simg_customer",simg_customer);
+        intent.putExtra("phone_customer",phone_customer);
+
         Common.OnSERVICIO = true;
 
         startActivity(intent);
@@ -192,7 +209,7 @@ public class Llamada extends AppCompatActivity {
 
         addresses = geocoder.getFromLocation(lat, lng, 1);
 
-        String street = addresses.get(0).getAddressLine(0);
+        street = addresses.get(0).getAddressLine(0);
 
         txtAddress.setText(street);
 

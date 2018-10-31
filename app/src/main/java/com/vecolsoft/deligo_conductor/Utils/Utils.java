@@ -1,13 +1,6 @@
 package com.vecolsoft.deligo_conductor.Utils;
 
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AlertDialog;
-
-import com.vecolsoft.deligo_conductor.R;
-import com.vecolsoft.deligo_conductor.Servicio.MyServicio;
 
 public class Utils {
 

@@ -11,9 +11,6 @@
     <string name="phone_login">Telefono</string>
     <string name="title_activity_home">Map</string>
 
-    <string name="Google_Directions_key">AIzaSyB-CQThr1FjY4siOu-JPWsRSYulaYyIvVw</string>
-    <string name="MapQuest_key">dIjBpRBgR9z8CrB0s9EATS48Hthyd7kJ</string>
-
     <string name="action_settings">Settings</string>
     <string name="title_activity_perfil">PerfilActivity</string>
     <string name="title_activity_seguimiento">Map</string>

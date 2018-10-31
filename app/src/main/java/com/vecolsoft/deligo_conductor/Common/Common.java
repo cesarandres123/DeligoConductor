@@ -4,9 +4,7 @@ import android.location.Location;
 
 import com.vecolsoft.deligo_conductor.Modelo.Driver;
 import com.vecolsoft.deligo_conductor.Remote.FCMClient;
-import com.vecolsoft.deligo_conductor.Remote.GetGson;
 import com.vecolsoft.deligo_conductor.Remote.IFCMService;
-import com.vecolsoft.deligo_conductor.Remote.RetrofitClient;
 
 public class Common {
 
@@ -24,14 +22,6 @@ public class Common {
     public static Driver CurrentUser;
 
     public static final int PICK_IMAGE_REQUEST = 9999;
-
-
-
-    private static final String BASE_URL = "https://api.mapbox.com";
-    public static GetGson getGson()
-    {
-        return RetrofitClient.getClient(BASE_URL).create(GetGson.class);
-    }
 
     public static final String fcmURL = "https://fcm.googleapis.com/";
     public static IFCMService getFCMService()
